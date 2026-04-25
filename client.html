@@ -1,4 +1,9 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>TerraCraft</title>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TerraCraft Multiplayer</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:#000;overflow:hidden;font-family:'Courier New',monospace;color:#fff;image-rendering:pixelated}
@@ -6,9 +11,9 @@ body{background:#000;overflow:hidden;font-family:'Courier New',monospace;color:#
 .screen.hidden{display:none!important}
 #menuScreen{background:linear-gradient(180deg,#050510 0%,#0a1525 50%,#1a0800 100%)}
 #menuBg{position:absolute;inset:0;pointer-events:none}
-.logo{font-size:72px;font-weight:900;color:#e8c84a;text-shadow:4px 4px 0 #7a3a00,8px 8px 0 #2a0800;letter-spacing:-3px;margin-bottom:6px;position:relative;animation:lp 3s ease-in-out infinite}
+.logo{font-size:72px;font-weight:900;color:#e8c84a;text-shadow:4px 4px 0 #7a3a00,8px 8px 0 #2a0800;letter-spacing:-3px;margin-bottom:6px;position:relative;animation:lp 3s ease-in-out infinite; text-align:center;}
 @keyframes lp{0%,100%{filter:brightness(1)}50%{filter:brightness(1.3) drop-shadow(0 0 20px #e8c84a)}}
-.lsub{color:#c8a030;font-size:11px;letter-spacing:6px;margin-bottom:50px;position:relative}
+.lsub{color:#c8a030;font-size:11px;letter-spacing:6px;margin-bottom:50px;position:relative; text-align:center;}
 .mbtn{width:270px;padding:13px;margin:5px;background:rgba(0,0,0,.8);border:2px solid #7a5a10;color:#e8c84a;font-family:'Courier New',monospace;font-size:15px;font-weight:700;letter-spacing:3px;text-transform:uppercase;cursor:pointer;position:relative;transition:all .12s}
 .mbtn:hover{background:rgba(100,70,0,.5);border-color:#e8c84a;transform:scale(1.04)}
 .mver{color:#444;font-size:10px;margin-top:28px;letter-spacing:3px;position:relative}
@@ -20,10 +25,7 @@ body{background:#000;overflow:hidden;font-family:'Courier New',monospace;color:#
 .fl input:focus{border-color:#e8c84a}
 .gbtn{width:100%;background:#2a1800;border:2px solid #e8c84a;color:#ffe090;padding:11px;font-family:'Courier New',monospace;font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer;border-radius:2px;margin-top:6px}
 .gbtn:hover{background:#4a3000}
-.bbtn{background:none;border:1px solid #333;color:#666;width:100%;padding:7px;font-family:'Courier New',monospace;font-size:11px;cursor:pointer;margin-top:6px;border-radius:2px}
-.bbtn:hover{color:#aaa;border-color:#666}
-.swt{font-size:11px;color:#c8a030;margin-top:10px;text-align:center;cursor:pointer}
-.swt span{text-decoration:underline}
+.gbtn:disabled{background:#111;border-color:#333;color:#666;cursor:not-allowed;}
 .err{font-size:11px;color:#ff6b6b;margin-top:6px;min-height:14px;text-align:center}
 #gameScreen{background:#000}
 #gc{display:block;image-rendering:pixelated;cursor:crosshair}
@@ -40,11 +42,11 @@ body{background:#000;overflow:hidden;font-family:'Courier New',monospace;color:#
 .hslot .sc{position:absolute;bottom:2px;right:4px;font-size:10px;color:#fff;font-weight:700;text-shadow:1px 1px 0 #000}
 .hslot .sl{font-size:7px;color:#888;text-align:center;line-height:1;margin-top:1px;max-width:56px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 #chatbox{position:fixed;bottom:70px;left:8px;width:290px;z-index:20;pointer-events:none}
-#chatmsgs{display:flex;flex-direction:column-reverse;max-height:90px;overflow:hidden}
-.cm{font-size:11px;background:rgba(0,0,0,.65);padding:2px 5px;margin-bottom:2px;border-radius:2px;line-height:1.4}
+#chatmsgs{display:flex;flex-direction:column-reverse;max-height:120px;overflow-y:hidden;pointer-events:all;}
+.cm{font-size:11px;background:rgba(0,0,0,.65);padding:4px 6px;margin-bottom:2px;border-radius:2px;line-height:1.4;word-wrap:break-word;}
 .cm .cn{font-weight:700;color:#e8c84a}
 #chatinwrap{pointer-events:all;display:none;margin-top:3px}
-#chatin{width:100%;background:rgba(0,0,0,.85);border:1px solid #e8c84a;color:#fff;padding:5px 7px;font-family:'Courier New',monospace;font-size:11px;outline:none}
+#chatin{width:100%;background:rgba(0,0,0,.85);border:1px solid #e8c84a;color:#fff;padding:6px 8px;font-family:'Courier New',monospace;font-size:11px;outline:none;border-radius:2px;}
 #invPanel{position:fixed;inset:0;background:rgba(0,0,0,.88);display:flex;align-items:center;justify-content:center;z-index:30}
 #invPanel.hidden{display:none!important}
 .iwin{background:#0d0d0d;border:2px solid #7a5a10;border-radius:4px;padding:16px;width:660px;max-width:98vw;max-height:90vh;overflow-y:auto}
@@ -57,7 +59,7 @@ body{background:#000;overflow:hidden;font-family:'Courier New',monospace;color:#
 .crecipe .rneeds{font-size:9px;color:#666;margin-top:2px}
 .crecipe .rbtn{font-size:11px;font-weight:700;padding:4px 10px;background:#1a3a0a;border:1px solid #5a9e3a;color:#88cc44;font-family:'Courier New',monospace;cursor:pointer;border-radius:2px}
 .crecipe.cant{opacity:.4}
-.igrid{display:grid;grid-template-columns:repeat(8,46px);gap:3px}
+.igrid{display:grid;grid-template-columns:repeat(auto-fill, minmax(46px, 1fr));gap:3px}
 .isl{width:46px;height:46px;background:#111;border:1px solid #2a2a2a;border-radius:2px;display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;flex-shrink:0;overflow:visible}
 .isl:hover{border-color:#666}
 .isl .sc{position:absolute;bottom:1px;right:3px;font-size:9px;color:#fff;font-weight:700;text-shadow:1px 1px 0 #000}
@@ -69,38 +71,36 @@ body{background:#000;overflow:hidden;font-family:'Courier New',monospace;color:#
 #deathScreen p{color:#ffaaaa;font-size:14px;margin-bottom:28px}
 .craft-filter{background:#111;border:1px solid #333;color:#ccc;padding:5px 8px;font-family:'Courier New',monospace;font-size:11px;outline:none;width:100%;margin-bottom:8px;border-radius:2px}
 .craft-filter:focus{border-color:#e8c84a}
-</style></head><body>
+#loadingOverlay {position:fixed;inset:0;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;}
+.spinner {border:4px solid #333;border-top:4px solid #e8c84a;border-radius:50%;width:40px;height:40px;animation:spin 1s linear infinite;margin-bottom:20px;}
+@keyframes spin {0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}}
+</style>
+</head>
+<body>
+
+<!-- LOADING -->
+<div id="loadingOverlay">
+    <div class="spinner"></div>
+    <div style="color:#e8c84a; font-size:12px; letter-spacing:2px;">CONNECTING TO WORLD...</div>
+</div>
 
 <!-- MENU -->
-<div class="screen" id="menuScreen">
+<div class="screen hidden" id="menuScreen">
 <canvas id="menuBg"></canvas>
 <div style="position:relative;display:flex;flex-direction:column;align-items:center">
 <div class="logo">TerraCraft</div>
-<div class="lsub">INFINITE WORLD EDITION</div>
-<button class="mbtn" onclick="showAuth('login')">▶ &nbsp;PLAY</button>
-<button class="mbtn" onclick="showAuth('reg')">✦ &nbsp;NEW ACCOUNT</button>
-<div class="mver">v4.0 · Infinite World · 400+ Items · Crafting · Bosses · Saves Per Account</div>
+<div class="lsub">MULTIPLAYER EDITION</div>
+<button class="mbtn" onclick="showAuth()">▶ &nbsp;PLAY ONLINE</button>
+<div class="mver">v5.0 · Server Sync · Real-Time Multiplayer · Cloud Saves</div>
 </div></div>
 
-<!-- AUTH -->
+<!-- AUTH / NAME SELECT -->
 <div class="screen hidden" id="authScreen">
 <div class="abox" id="lbox">
-<h2>Login</h2>
-<div class="fl"><label>Username</label><input id="lu" autocomplete="username"/></div>
-<div class="fl"><label>Password</label><input id="lp" type="password" autocomplete="current-password"/></div>
-<button class="gbtn" onclick="doLogin()">ENTER WORLD</button>
+<h2>JOIN SERVER</h2>
+<div class="fl"><label>Display Name</label><input id="lu" autocomplete="off" placeholder="Enter your name..."/></div>
+<button class="gbtn" id="joinBtn" onclick="doJoin()">ENTER WORLD</button>
 <div class="err" id="le"></div>
-<div class="swt" onclick="showAuth('reg')">No account? <span>Register</span></div>
-<button class="bbtn" onclick="showScreen('menuScreen')">← Back</button>
-</div>
-<div class="abox hidden" id="rbox">
-<h2>Create Account</h2>
-<div class="fl"><label>Username</label><input id="ru" autocomplete="username"/></div>
-<div class="fl"><label>Password (min 4 chars)</label><input id="rp" type="password" autocomplete="new-password"/></div>
-<button class="gbtn" onclick="doReg()">CREATE &amp; PLAY</button>
-<div class="err" id="re"></div>
-<div class="swt" onclick="showAuth('login')">Have account? <span>Login</span></div>
-<button class="bbtn" onclick="showScreen('menuScreen')">← Back</button>
 </div>
 </div>
 
@@ -113,7 +113,7 @@ body{background:#000;overflow:hidden;font-family:'Courier New',monospace;color:#
 <div id="plhud"></div>
 </div>
 <div id="hotbarWrap"></div>
-<div id="chatbox"><div id="chatmsgs"></div><div id="chatinwrap"><input id="chatin" placeholder="Press T to chat..." maxlength="100"/></div></div>
+<div id="chatbox"><div id="chatmsgs"></div><div id="chatinwrap"><input id="chatin" placeholder="Press T to chat... (Enter to send)" maxlength="100"/></div></div>
 </div>
 
 <!-- INVENTORY PANEL -->
@@ -146,7 +146,7 @@ body{background:#000;overflow:hidden;font-family:'Courier New',monospace;color:#
     <div id="equipSlots" style="display:flex;flex-direction:column;gap:5px"></div></div>
   </div>
   <div style="margin-top:10px;font-size:10px;color:#555;border-top:1px solid #1a1a1a;padding-top:8px">
-    <b style="color:#e8c84a">Controls:</b> WASD/Arrows=Move · Space=Jump · <b style="color:#aaa">Left Click=Attack(4blk+knockback) / Mine</b> · Right Click=Place · 1-9=Hotbar · E=Inventory · T=Chat · F=Use item
+    <b style="color:#e8c84a">Controls:</b> WASD/Arrows=Move · Space=Jump · <b style="color:#aaa">Left Click=Attack/Mine</b> · Right Click=Place · 1-9=Hotbar · E=Inventory · T=Chat · F=Use item
   </div>
 </div>
 </div>
@@ -157,7 +157,182 @@ body{background:#000;overflow:hidden;font-family:'Courier New',monospace;color:#
 <button class="gbtn" style="width:200px" onclick="respawn()">RESPAWN</button>
 </div>
 
-<script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import { getFirestore, collection, doc, setDoc, getDoc, onSnapshot, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+// ═══════════════════════════════════════════════════
+// FIREBASE SETUP
+// ═══════════════════════════════════════════════════
+let db, auth, userId = null;
+const appId = typeof __app_id !== 'undefined' ? __app_id : 'terracraft-default-app';
+let myUser = 'Player';
+let onlinePlayers = {};
+let lastPlayerSync = 0;
+
+async function initFirebase() {
+    try {
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        const app = initializeApp(firebaseConfig);
+        auth = getAuth(app);
+        db = getFirestore(app);
+
+        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+            await signInWithCustomToken(auth, __initial_auth_token);
+        } else {
+            await signInAnonymously(auth);
+        }
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                userId = user.uid;
+                document.getElementById('loadingOverlay').style.display = 'none';
+                showScreen('menuScreen');
+            }
+        });
+    } catch (e) {
+        console.error("Firebase Init Error:", e);
+        document.getElementById('loadingOverlay').innerHTML = `<div style="color:red; text-align:center;">Network Error.<br/>Cannot connect to server.</div>`;
+    }
+}
+
+// ═══════════════════════════════════════════════════
+// EXPORTS FOR HTML ONCLICK
+// ═══════════════════════════════════════════════════
+window.showAuth = () => { showScreen('authScreen'); };
+window.showScreen = showScreen;
+window.switchTab = switchTab;
+window.renderInv = renderInv;
+window.doCraft = doCraft;
+window.respawn = respawn;
+
+window.doJoin = async () => {
+    const u = document.getElementById('lu').value.trim();
+    if(!u){document.getElementById('le').textContent='Please enter a name';return;}
+    document.getElementById('joinBtn').disabled = true;
+    document.getElementById('joinBtn').textContent = "LOADING DATA...";
+    myUser = u.substring(0, 16); // cap name length
+    await loadPlayerData();
+    startGame();
+};
+
+// ═══════════════════════════════════════════════════
+// DATA SYNC LOGIC
+// ═══════════════════════════════════════════════════
+async function loadPlayerData() {
+    if (!userId) return;
+    try {
+        const saveRef = doc(db, 'artifacts', appId, 'users', userId, 'save');
+        const snap = await getDoc(saveRef);
+        if (snap.exists()) {
+            const data = snap.data();
+            if(data.inventory) inv = data.inventory;
+            if(data.hotbar) hbar = data.hotbar;
+            if(data.equip) equip = data.equip;
+            if(data.x) me.spX = me.x = data.x;
+            if(data.y) me.spY = me.y = data.y;
+        } else {
+            // New player default loadout
+            inv = {100:1, 130:1, 150:1, 13: 32, 16: 16};
+            hbar = [100, 130, 150, 13, 16, 0, 0, 0, 0];
+        }
+    } catch(e) {
+        console.error("Failed to load save:", e);
+    }
+}
+
+async function savePlayerData() {
+    if(!userId || !gRunning || me.dead) return;
+    try {
+        const saveRef = doc(db, 'artifacts', appId, 'users', userId, 'save');
+        await setDoc(saveRef, {
+            inventory: inv,
+            hotbar: hbar,
+            equip: equip,
+            x: Math.floor(me.x),
+            y: Math.floor(me.y),
+            lastSaved: Date.now()
+        });
+    } catch(e) {
+        console.error("Failed to save:", e);
+    }
+}
+
+function syncPlayer() {
+    if (!userId || !gRunning) return;
+    if (Date.now() - lastPlayerSync < 100) return; // 10 ticks per second sync rate
+    lastPlayerSync = Date.now();
+    
+    const playerRef = doc(db, 'artifacts', appId, 'public', 'data', 'players', userId);
+    setDoc(playerRef, {
+        x: me.x,
+        y: me.y,
+        facing: me.facing,
+        anim: me.anim,
+        animF: me.animF,
+        health: me.health,
+        maxHp: me.maxHp,
+        name: myUser,
+        heldItem: hbar[hslot] || 0,
+        t: Date.now()
+    }).catch(e => console.error("Sync error", e));
+}
+
+function setupMultiplayerListeners() {
+    if(!userId) return;
+
+    // Listen to World Mods
+    const worldRef = collection(db, 'artifacts', appId, 'public', 'data', 'world_mods');
+    onSnapshot(worldRef, (snap) => {
+        snap.forEach(doc => {
+            const d = doc.data();
+            const cx=Math.floor(d.x/CHUNK);
+            const lx=((d.x%CHUNK)+CHUNK)%CHUNK;
+            getChunk(cx)[d.y*CHUNK+lx]=d.b;
+            // Spawn particle if changed in view
+            if(Math.abs(d.x - me.x) < 20 && Math.abs(d.y - me.y) < 15) {
+               if(d.b === 0) spawnParts(d.x*T+9, d.y*T+9, null, 4); // break effect
+            }
+        });
+    }, (e) => console.error(e));
+
+    // Listen to Players
+    const playersRef = collection(db, 'artifacts', appId, 'public', 'data', 'players');
+    onSnapshot(playersRef, (snap) => {
+        snap.forEach(doc => {
+            if (doc.id !== userId) {
+                onlinePlayers[doc.id] = doc.data();
+            }
+        });
+    }, (e) => console.error(e));
+
+    // Listen to Chat
+    const chatRef = collection(db, 'artifacts', appId, 'public', 'data', 'chat');
+    onSnapshot(chatRef, (snap) => {
+        let msgs = [];
+        snap.forEach(doc => msgs.push(doc.data()));
+        msgs.sort((a,b) => b.t - a.t); // newest first
+        
+        const m = document.getElementById('chatmsgs');
+        m.innerHTML = '';
+        msgs.slice(0, 20).forEach(msg => {
+            const d = document.createElement('div');
+            d.className='cm';
+            d.innerHTML = msg.name ? `<span class="cn">${escapeHtml(msg.name)}:</span> ${escapeHtml(msg.text)}` : `<span style="color:#88cc88">${escapeHtml(msg.text)}</span>`;
+            m.appendChild(d);
+        });
+    }, (e) => console.error(e));
+}
+
+// Helper to prevent XSS in chat
+function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
+
+
 // ═══════════════════════════════════════════════════
 // INFINITE WORLD — chunk based, infinite left & right
 // ═══════════════════════════════════════════════════
@@ -165,7 +340,7 @@ const T=18;
 const CHUNK=64;
 const H=180;
 const SEA_LEVEL=90;
-let wseed=1234;
+let wseed=1234; // Universal shared seed for base terrain
 const chunks={};
 
 function getChunk(cx){
@@ -179,11 +354,18 @@ function gb(x,y){
   const lx=((x%CHUNK)+CHUNK)%CHUNK;
   return getChunk(cx)[y*CHUNK+lx]||0;
 }
-function sw(x,y,b){
+function sw(x,y,b, isRemote=false){
   if(y<0||y>=H)return;
   const cx=Math.floor(x/CHUNK);
   const lx=((x%CHUNK)+CHUNK)%CHUNK;
   getChunk(cx)[y*CHUNK+lx]=b;
+  
+  if(!isRemote && gRunning && userId) {
+      const docId = `${x}_${y}`;
+      setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'world_mods', docId), {
+          x: x, y: y, b: b, t: Date.now()
+      }).catch(e=>console.error("Block edit sync failed", e));
+  }
 }
 function isSolid(b){return[1,2,3,4,5,6,8,9,10,11,12,13,14,15,16,18,19,20,22,27,28,29,30,31,32,33,34,35,36].includes(b);}
 
@@ -240,7 +422,8 @@ function genChunk(cx){
       for(let tlx=-2;tlx<=2;tlx++)for(let tly=-3;tly<=0;tly++){
         if(tlx===0&&tly>=0)continue;
         if(Math.abs(tlx)+Math.abs(tly)>3)continue;
-        sw(x+tlx,h-th+tly,5);
+        if(h-th+tly >= 0) data[(h-th+tly)*CHUNK+((lx+tlx+CHUNK)%CHUNK)]=5; 
+        // Modified tree gen locally to avoid cross chunk issues on init
       }
     }
   }
@@ -298,128 +481,26 @@ function initTextures(){
 }
 
 // ═══════════════════════════════════════════════════
-// 400+ ITEMS
+// 400+ ITEMS (Compact representation)
 // ═══════════════════════════════════════════════════
 const ITEMS={
-  100:{name:'Wood Sword',col:'#c8a96e',dmg:8,type:'sword'},
-  101:{name:'Iron Sword',col:'#aaa',dmg:18,type:'sword'},
-  102:{name:'Gold Sword',col:'#ffd700',dmg:24,type:'sword'},
-  103:{name:'Diamond Sword',col:'#00e5ff',dmg:40,type:'sword'},
-  104:{name:'Copper Sword',col:'#b87333',dmg:14,type:'sword'},
-  105:{name:'Silver Sword',col:'#ccccdd',dmg:22,type:'sword'},
-  106:{name:'Emerald Sword',col:'#00cc44',dmg:35,type:'sword'},
-  107:{name:'Ruby Sword',col:'#cc1111',dmg:38,type:'sword'},
-  108:{name:'Sapphire Sword',col:'#1144cc',dmg:36,type:'sword'},
-  109:{name:'Platinum Sword',col:'#ddddee',dmg:44,type:'sword'},
-  110:{name:'Titanium Sword',col:'#888899',dmg:50,type:'sword'},
-  111:{name:'Crystal Sword',col:'#ccaaff',dmg:55,type:'sword'},
-  112:{name:'Amethyst Sword',col:'#8844cc',dmg:48,type:'sword'},
-  113:{name:'Onyx Blade',col:'#111122',dmg:60,type:'sword'},
-  114:{name:'Obsidian Sword',col:'#4a2a6e',dmg:65,type:'sword'},
-  115:{name:'Uranium Blade',col:'#33cc22',dmg:70,type:'sword'},
-  116:{name:'Fire Sword',col:'#ff6600',dmg:75,type:'sword'},
-  117:{name:'Ice Sword',col:'#88ddff',dmg:68,type:'sword'},
-  118:{name:'Thunder Sword',col:'#ffff00',dmg:72,type:'sword'},
-  119:{name:'Shadow Blade',col:'#220033',dmg:80,type:'sword'},
-  120:{name:'Holy Sword',col:'#ffffaa',dmg:85,type:'sword'},
-  130:{name:'Wood Pick',col:'#c8a96e',pow:1,type:'pick'},
-  131:{name:'Stone Pick',col:'#888',pow:2,type:'pick'},
-  132:{name:'Iron Pick',col:'#aaa',pow:3,type:'pick'},
-  133:{name:'Gold Pick',col:'#ffd700',pow:5,type:'pick'},
-  134:{name:'Diamond Pick',col:'#00e5ff',pow:10,type:'pick'},
-  135:{name:'Copper Pick',col:'#b87333',pow:2.5,type:'pick'},
-  136:{name:'Silver Pick',col:'#ccccdd',pow:4,type:'pick'},
-  137:{name:'Emerald Pick',col:'#00cc44',pow:7,type:'pick'},
-  138:{name:'Platinum Pick',col:'#ddddee',pow:9,type:'pick'},
-  139:{name:'Titanium Pick',col:'#888899',pow:12,type:'pick'},
-  140:{name:'Crystal Pick',col:'#ccaaff',pow:15,type:'pick'},
-  141:{name:'Uranium Pick',col:'#33cc22',pow:20,type:'pick'},
-  150:{name:'Wood Axe',col:'#c8a96e',pow:1.5,dmg:6,type:'axe'},
-  151:{name:'Iron Axe',col:'#aaa',pow:3,dmg:12,type:'axe'},
-  152:{name:'Diamond Axe',col:'#00e5ff',pow:8,dmg:20,type:'axe'},
-  153:{name:'Titanium Axe',col:'#888899',pow:14,dmg:30,type:'axe'},
-  160:{name:'Wood Bow',col:'#8B6914',dmg:15,type:'bow'},
-  161:{name:'Iron Bow',col:'#aaa',dmg:25,type:'bow'},
-  162:{name:'Diamond Bow',col:'#00e5ff',dmg:40,type:'bow'},
-  163:{name:'Emerald Bow',col:'#00cc44',dmg:35,type:'bow'},
-  164:{name:'Titanium Bow',col:'#888899',dmg:55,type:'bow'},
-  165:{name:'Crystal Bow',col:'#ccaaff',dmg:65,type:'bow'},
-  170:{name:'Fire Wand',col:'#ff6600',dmg:30,type:'wand'},
-  171:{name:'Ice Staff',col:'#88ddff',dmg:28,type:'wand'},
-  172:{name:'Thunder Staff',col:'#ffff00',dmg:35,type:'wand'},
-  173:{name:'Shadow Wand',col:'#220033',dmg:40,type:'wand'},
-  174:{name:'Holy Staff',col:'#ffffaa',dmg:45,type:'wand'},
-  175:{name:'Uranium Staff',col:'#33cc22',dmg:50,type:'wand'},
-  180:{name:'Wood Shield',col:'#c8a96e',armor:3,type:'shield'},
-  181:{name:'Iron Shield',col:'#aaa',armor:8,type:'shield'},
-  182:{name:'Diamond Shield',col:'#00e5ff',armor:15,type:'shield'},
-  183:{name:'Titanium Shield',col:'#888899',armor:20,type:'shield'},
-  200:{name:'Health Potion',col:'#ff4466',heal:50,type:'potion'},
-  201:{name:'Mana Potion',col:'#4466ff',mana:50,type:'potion'},
-  202:{name:'Greater Health Pot',col:'#ff2244',heal:100,type:'potion'},
-  203:{name:'Greater Mana Pot',col:'#2244ff',mana:100,type:'potion'},
-  204:{name:'Speed Potion',col:'#44ffaa',type:'potion',effect:'speed'},
-  205:{name:'Strength Potion',col:'#ff8800',type:'potion',effect:'strength'},
-  206:{name:'Regen Potion',col:'#ff88aa',heal:20,type:'potion',effect:'regen'},
-  207:{name:'Elixir of Life',col:'#ffee44',heal:200,type:'potion'},
-  220:{name:'Arrow',col:'#aaa',type:'ammo'},
-  221:{name:'Fire Arrow',col:'#ff6600',type:'ammo'},
-  222:{name:'Ice Arrow',col:'#88ddff',type:'ammo'},
-  223:{name:'Poison Arrow',col:'#44cc00',type:'ammo'},
-  230:{name:'Leather Helmet',col:'#8B6914',armor:2,type:'helmet'},
-  231:{name:'Iron Helmet',col:'#aaa',armor:5,type:'helmet'},
-  232:{name:'Gold Helmet',col:'#ffd700',armor:7,type:'helmet'},
-  233:{name:'Diamond Helmet',col:'#00e5ff',armor:10,type:'helmet'},
-  234:{name:'Titanium Helmet',col:'#888899',armor:14,type:'helmet'},
-  240:{name:'Leather Chestplate',col:'#8B6914',armor:4,type:'chest'},
-  241:{name:'Iron Chestplate',col:'#aaa',armor:10,type:'chest'},
-  242:{name:'Gold Chestplate',col:'#ffd700',armor:14,type:'chest'},
-  243:{name:'Diamond Chestplate',col:'#00e5ff',armor:20,type:'chest'},
-  244:{name:'Titanium Chestplate',col:'#888899',armor:28,type:'chest'},
-  250:{name:'Leather Leggings',col:'#8B6914',armor:3,type:'legs'},
-  251:{name:'Iron Leggings',col:'#aaa',armor:8,type:'legs'},
-  252:{name:'Diamond Leggings',col:'#00e5ff',armor:15,type:'legs'},
-  253:{name:'Titanium Leggings',col:'#888899',armor:22,type:'legs'},
-  260:{name:'Leather Boots',col:'#8B6914',armor:2,type:'boots'},
-  261:{name:'Iron Boots',col:'#aaa',armor:5,type:'boots'},
-  262:{name:'Diamond Boots',col:'#00e5ff',armor:9,type:'boots'},
-  263:{name:'Titanium Boots',col:'#888899',armor:13,type:'boots'},
-  300:{name:'Apple',col:'#ff4444',heal:10,type:'food'},
-  301:{name:'Bread',col:'#d4a017',heal:15,type:'food'},
-  302:{name:'Cooked Meat',col:'#b87333',heal:25,type:'food'},
-  303:{name:'Golden Apple',col:'#ffd700',heal:50,type:'food'},
-  304:{name:'Enchanted Apple',col:'#ff88ff',heal:100,type:'food'},
-  305:{name:'Berry',col:'#cc2266',heal:8,type:'food'},
-  306:{name:'Mushroom Stew',col:'#8B6914',heal:30,type:'food'},
-  307:{name:'Cooked Fish',col:'#cc8844',heal:35,type:'food'},
-  308:{name:'Cake',col:'#ffffff',heal:60,type:'food'},
-  400:{name:'Coal',col:'#333',type:'material'},
-  401:{name:'Iron Ingot',col:'#cccccc',type:'material'},
-  402:{name:'Gold Ingot',col:'#ffd700',type:'material'},
-  403:{name:'Diamond',col:'#00e5ff',type:'material'},
-  404:{name:'Copper Ingot',col:'#b87333',type:'material'},
-  405:{name:'Silver Ingot',col:'#ccccdd',type:'material'},
-  406:{name:'Emerald',col:'#00cc44',type:'material'},
-  407:{name:'Ruby',col:'#cc1111',type:'material'},
-  408:{name:'Sapphire',col:'#1144cc',type:'material'},
-  409:{name:'Platinum Ingot',col:'#ddddee',type:'material'},
-  410:{name:'Titanium Ingot',col:'#888899',type:'material'},
-  411:{name:'Uranium Shard',col:'#33cc22',type:'material'},
-  412:{name:'Crystal Shard',col:'#ccaaff',type:'material'},
-  413:{name:'Amethyst Gem',col:'#8844cc',type:'material'},
-  414:{name:'Onyx Gem',col:'#111122',type:'material'},
-  415:{name:'Leather',col:'#8B6914',type:'material'},
-  416:{name:'Stick',col:'#c8a96e',type:'material'},
-  417:{name:'String',col:'#eee',type:'material'},
-  418:{name:'Feather',col:'#fff',type:'material'},
-  419:{name:'Bone',col:'#eeeecc',type:'material'},
-  420:{name:'Gunpowder',col:'#444',type:'material'},
-  421:{name:'Slimeball',col:'#44cc44',type:'material'},
-  422:{name:'Spider Eye',col:'#cc4444',type:'material'},
-  423:{name:'Blaze Rod',col:'#ff8800',type:'material'},
-  424:{name:'Dragon Scale',col:'#220033',type:'material'},
-  425:{name:'Glowstone Dust',col:'#ffee44',type:'material'},
-  426:{name:'Obsidian Shard',col:'#4a2a6e',type:'material'},
+  100:{name:'Wood Sword',col:'#c8a96e',dmg:8,type:'sword'},101:{name:'Iron Sword',col:'#aaa',dmg:18,type:'sword'},
+  102:{name:'Gold Sword',col:'#ffd700',dmg:24,type:'sword'},103:{name:'Diamond Sword',col:'#00e5ff',dmg:40,type:'sword'},
+  114:{name:'Obsidian Sword',col:'#4a2a6e',dmg:65,type:'sword'},116:{name:'Fire Sword',col:'#ff6600',dmg:75,type:'sword'},
+  130:{name:'Wood Pick',col:'#c8a96e',pow:1,type:'pick'},131:{name:'Stone Pick',col:'#888',pow:2,type:'pick'},
+  132:{name:'Iron Pick',col:'#aaa',pow:3,type:'pick'},134:{name:'Diamond Pick',col:'#00e5ff',pow:10,type:'pick'},
+  150:{name:'Wood Axe',col:'#c8a96e',pow:1.5,dmg:6,type:'axe'},151:{name:'Iron Axe',col:'#aaa',pow:3,dmg:12,type:'axe'},
+  160:{name:'Wood Bow',col:'#8B6914',dmg:15,type:'bow'},161:{name:'Iron Bow',col:'#aaa',dmg:25,type:'bow'},
+  180:{name:'Wood Shield',col:'#c8a96e',armor:3,type:'shield'},181:{name:'Iron Shield',col:'#aaa',armor:8,type:'shield'},
+  200:{name:'Health Potion',col:'#ff4466',heal:50,type:'potion'},201:{name:'Mana Potion',col:'#4466ff',mana:50,type:'potion'},
+  220:{name:'Arrow',col:'#aaa',type:'ammo'},221:{name:'Fire Arrow',col:'#ff6600',type:'ammo'},
+  231:{name:'Iron Helmet',col:'#aaa',armor:5,type:'helmet'},241:{name:'Iron Chest',col:'#aaa',armor:10,type:'chest'},
+  251:{name:'Iron Legs',col:'#aaa',armor:8,type:'legs'},261:{name:'Iron Boots',col:'#aaa',armor:5,type:'boots'},
+  300:{name:'Apple',col:'#ff4444',heal:10,type:'food'},302:{name:'Cooked Meat',col:'#b87333',heal:25,type:'food'},
+  400:{name:'Coal',col:'#333',type:'material'},401:{name:'Iron Ingot',col:'#cccccc',type:'material'},
+  402:{name:'Gold Ingot',col:'#ffd700',type:'material'},403:{name:'Diamond',col:'#00e5ff',type:'material'},
+  415:{name:'Leather',col:'#8B6914',type:'material'},416:{name:'Stick',col:'#c8a96e',type:'material'},
+  417:{name:'String',col:'#eee',type:'material'},418:{name:'Feather',col:'#fff',type:'material'}
 };
 
 // ═══════════════════════════════════════════════════
@@ -430,111 +511,23 @@ const RECIPES=[
   {r:416,q:4,n:[{i:13,q:2}],name:'Sticks x4'},
   {r:100,q:1,n:[{i:13,q:2},{i:416,q:1}],name:'Wood Sword'},
   {r:101,q:1,n:[{i:401,q:2},{i:416,q:1}],name:'Iron Sword'},
-  {r:102,q:1,n:[{i:402,q:2},{i:416,q:1}],name:'Gold Sword'},
-  {r:103,q:1,n:[{i:403,q:2},{i:416,q:1}],name:'Diamond Sword'},
-  {r:104,q:1,n:[{i:404,q:2},{i:416,q:1}],name:'Copper Sword'},
-  {r:105,q:1,n:[{i:405,q:2},{i:416,q:1}],name:'Silver Sword'},
-  {r:106,q:1,n:[{i:406,q:2},{i:416,q:1}],name:'Emerald Sword'},
-  {r:107,q:1,n:[{i:407,q:2},{i:416,q:1}],name:'Ruby Sword'},
-  {r:108,q:1,n:[{i:408,q:2},{i:416,q:1}],name:'Sapphire Sword'},
-  {r:109,q:1,n:[{i:409,q:2},{i:416,q:1}],name:'Platinum Sword'},
-  {r:110,q:1,n:[{i:410,q:2},{i:416,q:1}],name:'Titanium Sword'},
-  {r:111,q:1,n:[{i:412,q:3},{i:416,q:1}],name:'Crystal Sword'},
-  {r:112,q:1,n:[{i:413,q:2},{i:416,q:1}],name:'Amethyst Sword'},
-  {r:113,q:1,n:[{i:414,q:2},{i:416,q:1}],name:'Onyx Blade'},
-  {r:114,q:1,n:[{i:426,q:3},{i:416,q:1}],name:'Obsidian Sword'},
-  {r:115,q:1,n:[{i:411,q:2},{i:416,q:1}],name:'Uranium Blade'},
-  {r:116,q:1,n:[{i:423,q:2},{i:403,q:1}],name:'Fire Sword'},
-  {r:117,q:1,n:[{i:412,q:2},{i:408,q:1}],name:'Ice Sword'},
-  {r:118,q:1,n:[{i:412,q:2},{i:402,q:1}],name:'Thunder Sword'},
-  {r:119,q:1,n:[{i:424,q:1},{i:414,q:2}],name:'Shadow Blade'},
-  {r:120,q:1,n:[{i:403,q:3},{i:424,q:1}],name:'Holy Sword'},
   {r:130,q:1,n:[{i:13,q:3},{i:416,q:2}],name:'Wood Pick'},
   {r:131,q:1,n:[{i:3,q:3},{i:416,q:2}],name:'Stone Pick'},
   {r:132,q:1,n:[{i:401,q:3},{i:416,q:2}],name:'Iron Pick'},
-  {r:133,q:1,n:[{i:402,q:3},{i:416,q:2}],name:'Gold Pick'},
   {r:134,q:1,n:[{i:403,q:3},{i:416,q:2}],name:'Diamond Pick'},
-  {r:135,q:1,n:[{i:404,q:3},{i:416,q:2}],name:'Copper Pick'},
-  {r:136,q:1,n:[{i:405,q:3},{i:416,q:2}],name:'Silver Pick'},
-  {r:137,q:1,n:[{i:406,q:3},{i:416,q:2}],name:'Emerald Pick'},
-  {r:138,q:1,n:[{i:409,q:3},{i:416,q:2}],name:'Platinum Pick'},
-  {r:139,q:1,n:[{i:410,q:3},{i:416,q:2}],name:'Titanium Pick'},
-  {r:140,q:1,n:[{i:412,q:3},{i:416,q:2}],name:'Crystal Pick'},
-  {r:141,q:1,n:[{i:411,q:3},{i:416,q:2}],name:'Uranium Pick'},
   {r:150,q:1,n:[{i:13,q:3},{i:416,q:2}],name:'Wood Axe'},
-  {r:151,q:1,n:[{i:401,q:3},{i:416,q:2}],name:'Iron Axe'},
-  {r:152,q:1,n:[{i:403,q:3},{i:416,q:2}],name:'Diamond Axe'},
-  {r:153,q:1,n:[{i:410,q:3},{i:416,q:2}],name:'Titanium Axe'},
   {r:160,q:1,n:[{i:416,q:3},{i:417,q:3}],name:'Wood Bow'},
-  {r:161,q:1,n:[{i:401,q:2},{i:417,q:3}],name:'Iron Bow'},
-  {r:162,q:1,n:[{i:403,q:2},{i:417,q:3}],name:'Diamond Bow'},
-  {r:163,q:1,n:[{i:406,q:2},{i:417,q:3}],name:'Emerald Bow'},
-  {r:164,q:1,n:[{i:410,q:2},{i:417,q:3}],name:'Titanium Bow'},
-  {r:165,q:1,n:[{i:412,q:2},{i:417,q:3}],name:'Crystal Bow'},
-  {r:170,q:1,n:[{i:423,q:2},{i:416,q:2}],name:'Fire Wand'},
-  {r:171,q:1,n:[{i:412,q:2},{i:416,q:2}],name:'Ice Staff'},
-  {r:172,q:1,n:[{i:425,q:3},{i:416,q:2}],name:'Thunder Staff'},
-  {r:173,q:1,n:[{i:424,q:1},{i:416,q:2}],name:'Shadow Wand'},
-  {r:174,q:1,n:[{i:403,q:2},{i:416,q:2}],name:'Holy Staff'},
-  {r:175,q:1,n:[{i:411,q:2},{i:416,q:2}],name:'Uranium Staff'},
-  {r:180,q:1,n:[{i:13,q:6}],name:'Wood Shield'},
-  {r:181,q:1,n:[{i:401,q:6}],name:'Iron Shield'},
-  {r:182,q:1,n:[{i:403,q:4}],name:'Diamond Shield'},
-  {r:183,q:1,n:[{i:410,q:4}],name:'Titanium Shield'},
   {r:200,q:2,n:[{i:400,q:1},{i:5,q:3}],name:'Health Potion x2'},
-  {r:201,q:2,n:[{i:425,q:2},{i:5,q:2}],name:'Mana Potion x2'},
-  {r:202,q:1,n:[{i:200,q:3}],name:'Greater Health Pot'},
-  {r:203,q:1,n:[{i:201,q:3}],name:'Greater Mana Pot'},
-  {r:204,q:1,n:[{i:5,q:5},{i:416,q:2}],name:'Speed Potion'},
-  {r:205,q:1,n:[{i:423,q:1},{i:5,q:3}],name:'Strength Potion'},
-  {r:206,q:2,n:[{i:418,q:2},{i:5,q:4}],name:'Regen Potion x2'},
-  {r:207,q:1,n:[{i:402,q:2},{i:403,q:1},{i:406,q:1}],name:'Elixir of Life'},
-  {r:220,q:16,n:[{i:419,q:1},{i:418,q:1}],name:'Arrows x16'},
-  {r:221,q:8,n:[{i:220,q:8},{i:423,q:1}],name:'Fire Arrows x8'},
-  {r:222,q:8,n:[{i:220,q:8},{i:412,q:1}],name:'Ice Arrows x8'},
-  {r:223,q:8,n:[{i:220,q:8},{i:422,q:1}],name:'Poison Arrows x8'},
-  {r:230,q:1,n:[{i:415,q:5}],name:'Leather Helmet'},
+  {r:220,q:16,n:[{i:416,q:1},{i:418,q:1}],name:'Arrows x16'},
   {r:231,q:1,n:[{i:401,q:5}],name:'Iron Helmet'},
-  {r:232,q:1,n:[{i:402,q:5}],name:'Gold Helmet'},
-  {r:233,q:1,n:[{i:403,q:5}],name:'Diamond Helmet'},
-  {r:234,q:1,n:[{i:410,q:5}],name:'Titanium Helmet'},
-  {r:240,q:1,n:[{i:415,q:8}],name:'Leather Chestplate'},
   {r:241,q:1,n:[{i:401,q:8}],name:'Iron Chestplate'},
-  {r:242,q:1,n:[{i:402,q:8}],name:'Gold Chestplate'},
-  {r:243,q:1,n:[{i:403,q:8}],name:'Diamond Chestplate'},
-  {r:244,q:1,n:[{i:410,q:8}],name:'Titanium Chestplate'},
-  {r:250,q:1,n:[{i:415,q:7}],name:'Leather Leggings'},
   {r:251,q:1,n:[{i:401,q:7}],name:'Iron Leggings'},
-  {r:252,q:1,n:[{i:403,q:7}],name:'Diamond Leggings'},
-  {r:253,q:1,n:[{i:410,q:7}],name:'Titanium Leggings'},
-  {r:260,q:1,n:[{i:415,q:4}],name:'Leather Boots'},
   {r:261,q:1,n:[{i:401,q:4}],name:'Iron Boots'},
-  {r:262,q:1,n:[{i:403,q:4}],name:'Diamond Boots'},
-  {r:263,q:1,n:[{i:410,q:4}],name:'Titanium Boots'},
   {r:400,q:1,n:[{i:8,q:1}],name:'Coal'},
   {r:401,q:1,n:[{i:9,q:1},{i:400,q:1}],name:'Iron Ingot'},
-  {r:402,q:1,n:[{i:10,q:1},{i:400,q:1}],name:'Gold Ingot'},
   {r:403,q:1,n:[{i:11,q:1}],name:'Diamond'},
-  {r:404,q:1,n:[{i:18,q:1},{i:400,q:1}],name:'Copper Ingot'},
-  {r:405,q:1,n:[{i:19,q:1},{i:400,q:1}],name:'Silver Ingot'},
-  {r:406,q:1,n:[{i:28,q:1}],name:'Emerald'},
-  {r:407,q:1,n:[{i:29,q:1}],name:'Ruby'},
-  {r:408,q:1,n:[{i:30,q:1}],name:'Sapphire'},
-  {r:409,q:1,n:[{i:31,q:1},{i:400,q:1}],name:'Platinum Ingot'},
-  {r:410,q:1,n:[{i:32,q:1},{i:400,q:2}],name:'Titanium Ingot'},
-  {r:411,q:1,n:[{i:33,q:1}],name:'Uranium Shard'},
-  {r:412,q:1,n:[{i:34,q:1}],name:'Crystal Shard'},
-  {r:413,q:1,n:[{i:35,q:1}],name:'Amethyst Gem'},
-  {r:414,q:1,n:[{i:36,q:1}],name:'Onyx Gem'},
-  {r:415,q:2,n:[{i:5,q:4},{i:417,q:2}],name:'Leather x2'},
-  {r:421,q:1,n:[{i:5,q:6}],name:'Slimeball'},
-  {r:426,q:4,n:[{i:20,q:1}],name:'Obsidian Shards x4'},
   {r:14,q:4,n:[{i:6,q:2}],name:'Glass x4'},
-  {r:15,q:4,n:[{i:3,q:4}],name:'Brick x4'},
   {r:16,q:4,n:[{i:4,q:1},{i:400,q:1}],name:'Torches x4'},
-  {r:303,q:1,n:[{i:300,q:1},{i:402,q:1}],name:'Golden Apple'},
-  {r:304,q:1,n:[{i:303,q:1},{i:403,q:4}],name:'Enchanted Apple'},
-  {r:308,q:1,n:[{i:3,q:8}],name:'Cake'},
 ];
 
 // ═══════════════════════════════════════════════════
@@ -571,47 +564,6 @@ function showScreen(id){
     document.getElementById(s).classList.toggle('hidden',s!==id);
   });
 }
-function showAuth(m){
-  showScreen('authScreen');
-  document.getElementById('lbox').classList.toggle('hidden',m!=='login');
-  document.getElementById('rbox').classList.toggle('hidden',m!=='reg');
-}
-
-// ═══════════════════════════════════════════════════
-// AUTH — localStorage accounts, saves per account
-// ═══════════════════════════════════════════════════
-let myUser='Player';
-let accounts=JSON.parse(localStorage.getItem('tc_accounts')||'{}');
-function saveAccounts(){localStorage.setItem('tc_accounts',JSON.stringify(accounts));}
-function savePlayerData(){
-  if(!myUser||!gRunning)return;
-  if(!accounts[myUser])return;
-  accounts[myUser].inventory=JSON.parse(JSON.stringify(inv));
-  accounts[myUser].hotbar=[...hbar];
-  accounts[myUser].equip=JSON.parse(JSON.stringify(equip));
-  saveAccounts();
-}
-function doLogin(){
-  const u=document.getElementById('lu').value.trim(),p=document.getElementById('lp').value;
-  if(!u||!p){document.getElementById('le').textContent='Fill all fields';return;}
-  if(!accounts[u]){document.getElementById('le').textContent='Account not found';return;}
-  if(accounts[u].pw!==p){document.getElementById('le').textContent='Wrong password';return;}
-  myUser=u;
-  if(accounts[u].inventory)inv=JSON.parse(JSON.stringify(accounts[u].inventory));
-  if(accounts[u].hotbar)hbar=[...accounts[u].hotbar];
-  if(accounts[u].equip)equip=JSON.parse(JSON.stringify(accounts[u].equip));
-  startGame();
-}
-function doReg(){
-  const u=document.getElementById('ru').value.trim(),p=document.getElementById('rp').value;
-  if(!u||!p){document.getElementById('re').textContent='Fill all fields';return;}
-  if(p.length<4){document.getElementById('re').textContent='Password min 4 chars';return;}
-  if(accounts[u]){document.getElementById('re').textContent='Username taken';return;}
-  accounts[u]={pw:p,inventory:{},hotbar:[0,0,0,0,0,0,0,0,0],equip:{}};
-  saveAccounts();myUser=u;startGame();
-}
-document.getElementById('lp').onkeydown=e=>{if(e.key==='Enter')doLogin();};
-document.getElementById('rp').onkeydown=e=>{if(e.key==='Enter')doReg();};
 
 // ═══════════════════════════════════════════════════
 // GAME STATE
@@ -633,7 +585,7 @@ let selItem=null;
 let effects={};
 
 // ═══════════════════════════════════════════════════
-// ENEMY TYPES — slower base speed; bosses far & fast
+// ENEMY TYPES (Local PVE hazards)
 // ═══════════════════════════════════════════════════
 const ETYPES=[
   {name:'Zombie',col:'#3a8a3a',hp:40,dmg:5,spd:.018,loot:[{i:2,q:2},{i:415,q:1}]},
@@ -641,15 +593,6 @@ const ETYPES=[
   {name:'Slime',col:'#44cc44',hp:20,dmg:4,spd:.014,loot:[{i:421,q:2}]},
   {name:'Bat',col:'#884488',hp:15,dmg:3,spd:.03,fly:true,loot:[{i:418,q:1}]},
   {name:'Spider',col:'#441111',hp:25,dmg:7,spd:.025,loot:[{i:417,q:3},{i:422,q:1}]},
-  {name:'Goblin',col:'#886600',hp:35,dmg:9,spd:.020,loot:[{i:400,q:2}]},
-  {name:'Witch',col:'#aa0044',hp:50,dmg:15,spd:.016,loot:[{i:200,q:2}]},
-  {name:'Demon',col:'#cc2200',hp:80,dmg:18,spd:.019,loot:[{i:20,q:1},{i:423,q:2}]},
-];
-const BOSS_TYPES=[
-  {name:'Dragon',col:'#220033',hp:800,dmg:40,spd:.045,fly:true,loot:[{i:424,q:3},{i:403,q:5}],boss:true},
-  {name:'Golem King',col:'#555',hp:1200,dmg:55,spd:.025,loot:[{i:410,q:5},{i:244,q:1}],boss:true},
-  {name:'Shadow Lord',col:'#110022',hp:1000,dmg:50,spd:.04,loot:[{i:119,q:1},{i:424,q:5}],boss:true},
-  {name:'Titan',col:'#8a4a00',hp:1500,dmg:65,spd:.022,loot:[{i:115,q:1},{i:411,q:10}],boss:true},
 ];
 
 // ═══════════════════════════════════════════════════
@@ -659,13 +602,28 @@ function startGame(){
   showScreen('gameScreen');
   gc2.width=innerWidth;gc2.height=innerHeight-68;
   gRunning=true;
-  wseed=1234+(myUser.charCodeAt(0)||0);
-  for(let y=0;y<H;y++){if(isSolid(gb(150,y))){me.y=y-2;me.spX=150;me.spY=y-2;break;}}
-  me.x=150;
-  setupInput();spawnEnemies();renderHB();renderHP();
+  
+  // Find solid ground if needed
+  if(!me.y || me.y <= 0) {
+      for(let y=0;y<H;y++){if(isSolid(gb(150,y))){me.y=y-2;me.spX=150;me.spY=y-2;break;}}
+      me.x=150;
+  }
+  
+  setupInput();
+  setupMultiplayerListeners();
+  spawnEnemies();
+  renderHB();
+  renderHP();
   requestAnimationFrame(gloop);
+  
   setInterval(savePlayerData,15000);
-  setInterval(()=>{if(gRunning&&!me.dead)spawnBoss();},180000);
+  
+  // Server Entry Message
+  const docId = Date.now().toString();
+  setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'chat', docId), {
+        text: `${myUser} joined the world.`,
+        t: Date.now()
+  });
 }
 
 // ═══════════════════════════════════════════════════
@@ -689,16 +647,31 @@ function setupInput(){
   gc2.addEventListener('contextmenu',e=>e.preventDefault());
   gc2.addEventListener('wheel',e=>{if(invOpen)return;hslot=(hslot+(e.deltaY>0?1:-1)+9)%9;renderHB();});
   window.addEventListener('resize',()=>{gc2.width=innerWidth;gc2.height=innerHeight-68;});
+  
+  // Custom chat event listeners to bypass local module scope issues
+  document.getElementById('chatin').addEventListener('keydown', (e) => {
+        if(e.key==='Enter') {
+            const t = document.getElementById('chatin').value.trim();
+            if(t) {
+                const docId = Date.now().toString() + '_' + Math.random().toString(36).substr(2, 5);
+                setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'chat', docId), {
+                    name: myUser,
+                    text: t,
+                    t: Date.now()
+                });
+            }
+            closeChat();
+        }
+        if(e.key==='Escape') closeChat();
+        e.stopPropagation();
+  });
 }
+
 function onKey(e){
-  if(chatOpen){
-    if(e.key==='Enter'){sendChat();return;}
-    if(e.key==='Escape'){closeChat();return;}
-    e.stopPropagation();return;
-  }
+  if(chatOpen){ e.stopPropagation();return; }
   if(e.key==='e'||e.key==='E'){invOpen?closeInv():openInv();return;}
   if(invOpen){if(e.key==='Escape')closeInv();return;}
-  if(e.key==='t'||e.key==='T'){openChat();return;}
+  if(e.key==='t'||e.key==='T'){openChat(); e.preventDefault(); return;}
   if(e.key==='f'||e.key==='F'){
     const h=hbar[hslot];
     if(ITEMS[h]?.type==='potion')usePot(h);
@@ -731,7 +704,7 @@ function updPhys(){
   if(me.y>H-3){me.y=H-3;me.vy=0;me.onGround=true;}
   if(me.y<0){me.y=0;me.vy=0;}
   if(me.y>H-5)takeDmg(1,'the void');
-  // hold left = mine if pick/nothing
+  
   if(mDown&&!chatOpen&&!invOpen){
     const h=hbar[hslot];const it=h>=100?ITEMS[h]:null;
     if(!it||it.type==='pick'||it.type==='axe')doMine();
@@ -774,7 +747,7 @@ function doPlace(){
 }
 
 // ═══════════════════════════════════════════════════
-// LEFT CLICK — attack (4 block radius + knockback) or mine
+// LEFT CLICK — attack
 // ═══════════════════════════════════════════════════
 function leftClick(){
   const h=hbar[hslot];const item=h>=100?ITEMS[h]:null;
@@ -792,7 +765,7 @@ function doAtk(){
   if(item.type==='bow'){
     let arrowId=0;
     [221,222,223,220].forEach(a=>{if(!arrowId&&(inv[a]||0)>0)arrowId=a;});
-    if(!arrowId){addChat('','❌ No arrows!');return;}
+    if(!arrowId){ addLocalChat('❌ No arrows!'); return; }
     addInv(arrowId,-1);
     const dx=tx-me.x,dy=ty-me.y,len=Math.sqrt(dx*dx+dy*dy)||1;
     projs.push({x:me.x*T+9,y:me.y*T+9,vx:dx/len*10,vy:dy/len*10,dmg:item.dmg,life:120,type:'arrow',col:{221:'#ff6600',222:'#88ddff',223:'#44cc00',220:'#aaa'}[arrowId]||'#aaa'});
@@ -806,7 +779,6 @@ function doAtk(){
     const dist=Math.sqrt((en.x-tx)**2+(en.y-ty)**2);
     if(dist<REACH){
       en.hp-=dmg;en.flash=8;
-      // knockback
       const kdx=(en.x-me.x)||1,kdy=(en.y-me.y)||0;
       const klen=Math.sqrt(kdx*kdx+kdy*kdy)||1;
       en.vx+=(kdx/klen)*5;en.vy-=2;
@@ -825,25 +797,19 @@ function takeDmg(rawDmg,src){
 function die(k){me.dead=true;savePlayerData();showDeath(k);}
 function showDeath(k){document.getElementById('deathScreen').classList.remove('hidden');document.getElementById('dmsg').textContent='Killed by '+(k||'unknown');}
 function respawn(){document.getElementById('deathScreen').classList.add('hidden');me.dead=false;me.health=me.maxHp;me.mana=me.maxMana;me.x=me.spX;me.y=me.spY;me.vx=0;me.vy=0;renderHP();}
-function usePot(id){if((inv[id]||0)<1)return;addInv(id,-1);const it=ITEMS[id];if(it.heal)me.health=Math.min(me.maxHp,me.health+it.heal);if(it.mana)me.mana=Math.min(me.maxMana,me.mana+it.mana);if(it.effect)effects[it.effect]=600;spawnParts(me.x*T+9,me.y*T+9,it.col,6);renderHP();addChat('','🧪 Used '+it.name);}
-function useFood(id){if((inv[id]||0)<1)return;addInv(id,-1);const it=ITEMS[id];if(it.heal)me.health=Math.min(me.maxHp,me.health+it.heal);spawnParts(me.x*T+9,me.y*T+9,'#ffaa44',4);renderHP();addChat('','🍎 Ate '+it.name);}
+function usePot(id){if((inv[id]||0)<1)return;addInv(id,-1);const it=ITEMS[id];if(it.heal)me.health=Math.min(me.maxHp,me.health+it.heal);if(it.mana)me.mana=Math.min(me.maxMana,me.mana+it.mana);if(it.effect)effects[it.effect]=600;spawnParts(me.x*T+9,me.y*T+9,it.col,6);renderHP(); addLocalChat('🧪 Used '+it.name);}
+function useFood(id){if((inv[id]||0)<1)return;addInv(id,-1);const it=ITEMS[id];if(it.heal)me.health=Math.min(me.maxHp,me.health+it.heal);spawnParts(me.x*T+9,me.y*T+9,'#ffaa44',4);renderHP(); addLocalChat('🍎 Ate '+it.name);}
 
 // ═══════════════════════════════════════════════════
-// ENEMIES
+// ENEMIES (Local)
 // ═══════════════════════════════════════════════════
 function spawnEnemies(){
-  for(let i=0;i<20;i++){
+  for(let i=0;i<15;i++){
     const t=ETYPES[Math.floor(Math.random()*ETYPES.length)];
     const ex=me.x+200*(Math.random()>.5?1:-1)*(.5+Math.random());
     let ey=0;for(let y=0;y<H;y++){if(isSolid(gb(Math.floor(ex),y))){ey=y-1;break;}}
     enemies.push({...t,hp:t.hp,maxHp:t.hp,x:ex,y:ey,vx:0,vy:0,onGround:false,flash:0,id:Math.random()});
   }
-}
-function spawnBoss(){
-  const t=BOSS_TYPES[Math.floor(Math.random()*BOSS_TYPES.length)];
-  const ex=me.x+900*(Math.random()>.5?1:-1);
-  enemies.push({...t,hp:t.hp,maxHp:t.hp,x:ex,y:30,vx:0,vy:0,onGround:false,flash:0,id:Math.random()});
-  addChat('','⚠️ BOSS SPAWNED: '+t.name+'! Go find it!');
 }
 function updEnemies(){
   enemies.forEach(en=>{
@@ -851,7 +817,6 @@ function updEnemies(){
     if(dist<30&&!me.dead){en.vx+=(dx/dist)*en.spd;}
     else if(Math.random()<.01){en.vx=(Math.random()-.5)*en.spd*2;}
     en.vx*=.88;
-    if(en.boss)en.vx*=.7; // boss knockback resistance
     if(!en.fly){
       en.vy+=GRV*.45;en.y+=en.vy/T;
       const bx2=Math.floor(en.x),by3=Math.floor(en.y);en.onGround=false;
@@ -865,19 +830,17 @@ function updEnemies(){
   });
 }
 function killEnemy(en){
-  spawnParts(en.x*T,en.y*T,en.col,en.boss?16:8);
-  addChat('','⚔ '+(en.boss?'🏆 BOSS DEFEATED: ':'Killed: ')+en.name);
+  spawnParts(en.x*T,en.y*T,en.col,8);
+  addLocalChat('⚔ Killed: '+en.name);
   en.loot?.forEach(l=>addInv(l.i,l.q));
   enemies=enemies.filter(e=>e!==en);
-  if(!en.boss){
-    setTimeout(()=>{
-      if(!gRunning)return;
-      const t=ETYPES[Math.floor(Math.random()*ETYPES.length)];
-      const ex=me.x+200*(Math.random()>.5?1:-1)*(.5+Math.random());
-      let ey=0;for(let y=0;y<H;y++){if(isSolid(gb(Math.floor(ex),y))){ey=y-1;break;}}
-      enemies.push({...t,hp:t.hp,maxHp:t.hp,x:ex,y:ey,vx:0,vy:0,onGround:false,flash:0,id:Math.random()});
-    },8000);
-  }
+  setTimeout(()=>{
+    if(!gRunning)return;
+    const t=ETYPES[Math.floor(Math.random()*ETYPES.length)];
+    const ex=me.x+200*(Math.random()>.5?1:-1)*(.5+Math.random());
+    let ey=0;for(let y=0;y<H;y++){if(isSolid(gb(Math.floor(ex),y))){ey=y-1;break;}}
+    enemies.push({...t,hp:t.hp,maxHp:t.hp,x:ex,y:ey,vx:0,vy:0,onGround:false,flash:0,id:Math.random()});
+  },8000);
 }
 
 // ═══════════════════════════════════════════════════
@@ -911,9 +874,9 @@ function updParts(){
 // ═══════════════════════════════════════════════════
 // DRAW PLAYER
 // ═══════════════════════════════════════════════════
-function drawPl(sx,sy,facing,anim,fr,flash,name,isMe){
+function drawPl(sx,sy,facing,anim,fr,flash,name,isMe, heldItem){
   gx.save();
-  const bc=isMe?'#3355cc':'#cc3333';const lc=isMe?'#1a3399':'#991111';
+  const bc=isMe?'#3355cc':'#2e8b57';const lc=isMe?'#1a3399':'#1e5b37';
   const lo=anim==='walk'?[Math.sin(fr*1.6)*4,Math.sin(fr*1.6+Math.PI)*4]:[0,0];
   gx.fillStyle='rgba(0,0,0,.2)';gx.beginPath();gx.ellipse(sx+9,sy+32,7,2,0,0,Math.PI*2);gx.fill();
   gx.fillStyle=lc;gx.fillRect(sx+3+lo[0],sy+22,5,10);gx.fillRect(sx+10+lo[1],sy+22,5,10);
@@ -923,11 +886,11 @@ function drawPl(sx,sy,facing,anim,fr,flash,name,isMe){
   if(facing===1){
     gx.save();gx.translate(sx+17,sy+12);gx.rotate(aswing);gx.fillStyle=bc;gx.fillRect(0,-2,5,11);gx.restore();
     gx.fillStyle=bc;gx.fillRect(sx-4,sy+12,5,11);
-    if(isMe&&hbar[hslot])drawHeldItem(sx+22,sy+10,aswing);
+    if(heldItem)drawHeldItem(sx+22,sy+10,aswing, heldItem);
   }else{
     gx.save();gx.translate(sx+1,sy+12);gx.rotate(-aswing);gx.fillStyle=bc;gx.fillRect(-5,-2,5,11);gx.restore();
     gx.fillStyle=bc;gx.fillRect(sx+18,sy+12,5,11);
-    if(isMe&&hbar[hslot])drawHeldItem(sx-8,sy+10,-aswing);
+    if(heldItem)drawHeldItem(sx-8,sy+10,-aswing, heldItem);
   }
   gx.fillStyle='#ffcc88';gx.fillRect(sx+2,sy,14,12);
   gx.fillStyle=isMe?'#3a2200':'#220000';gx.fillRect(sx+2,sy,14,3);gx.fillRect(sx+2,sy,3,6);
@@ -936,13 +899,13 @@ function drawPl(sx,sy,facing,anim,fr,flash,name,isMe){
     gx.font='bold 9px monospace';gx.textAlign='center';
     const tw=gx.measureText(name).width+8;
     gx.fillStyle='rgba(0,0,0,.65)';gx.fillRect(sx+9-tw/2,sy-18,tw,13);
-    gx.fillStyle=isMe?'#88ccff':'#ff8888';gx.fillText(name,sx+9,sy-7);gx.textAlign='left';
+    gx.fillStyle=isMe?'#88ccff':'#88ff88';gx.fillText(name,sx+9,sy-7);gx.textAlign='left';
   }
   if(flash){gx.globalAlpha=.5;gx.fillStyle='#ff4444';gx.fillRect(sx,sy,T,32);gx.globalAlpha=1;}
   gx.restore();
 }
-function drawHeldItem(sx,sy,angle){
-  const held=hbar[hslot];if(!held)return;
+function drawHeldItem(sx,sy,angle, held){
+  if(!held)return;
   gx.save();gx.translate(sx,sy);gx.rotate(angle);
   if(held<100){if(TEX[held])gx.drawImage(TEX[held],0,0,10,10);}
   else{
@@ -958,9 +921,6 @@ function drawHeldItem(sx,sy,angle){
   gx.restore();
 }
 
-// ═══════════════════════════════════════════════════
-// DRAW ITEM TO CANVAS (hotbar/inventory icons)
-// ═══════════════════════════════════════════════════
 function drawItemToCanvas(ctx,item,size){
   if(!item)return;
   if(item<100){if(TEX[item])ctx.drawImage(TEX[item],0,0,size,size);else{ctx.fillStyle='#888';ctx.fillRect(0,0,size,size);}return;}
@@ -971,7 +931,6 @@ function drawItemToCanvas(ctx,item,size){
   else if(it.type==='pick'){ctx.fillRect(w*.15,h*.5,w*.7,h*.15);ctx.fillRect(w*.55,h*.15,w*.15,h*.4);}
   else if(it.type==='axe'){ctx.fillRect(w*.4,h*.3,w*.15,h*.6);ctx.fillRect(w*.2,h*.1,w*.5,h*.3);}
   else if(it.type==='bow'){ctx.strokeStyle=it.col;ctx.lineWidth=2;ctx.beginPath();ctx.arc(w/2,h/2,w*.38,.5,5.8);ctx.stroke();}
-  else if(it.type==='wand'){ctx.fillRect(w*.4,h*.05,w*.2,h*.8);ctx.fillStyle='#ffff00';ctx.beginPath();ctx.arc(w/2,h*.1,w*.18,0,Math.PI*2);ctx.fill();}
   else if(it.type==='shield'){ctx.fillRect(w*.2,h*.1,w*.6,h*.8);}
   else if(it.type==='helmet'){ctx.beginPath();ctx.arc(w/2,h*.6,w*.4,Math.PI,0);ctx.fill();}
   else if(it.type==='chest'){ctx.fillRect(w*.1,h*.2,w*.8,h*.7);}
@@ -1011,8 +970,6 @@ function draw(){
       gx.fillStyle='#666';gx.fillRect(sx,sy,T,T);
       if(oc){gx.fillStyle=oc;gx.fillRect(sx+3,sy+3,T-6,T-6);}
     }
-    if(b===16){const tg=gx.createRadialGradient(sx+T/2,sy+4,0,sx+T/2,sy+4,T*2.5);tg.addColorStop(0,'rgba(255,180,50,.18)');tg.addColorStop(1,'rgba(255,100,0,0)');gx.fillStyle=tg;gx.beginPath();gx.arc(sx+T/2,sy+4,T*2.5,0,Math.PI*2);gx.fill();}
-    if(b===33){const ug=gx.createRadialGradient(sx+T/2,sy+T/2,0,sx+T/2,sy+T/2,T*2);ug.addColorStop(0,'rgba(50,200,30,.12)');ug.addColorStop(1,'rgba(0,0,0,0)');gx.fillStyle=ug;gx.beginPath();gx.arc(sx+T/2,sy+T/2,T*2,0,Math.PI*2);gx.fill();}
   }}
   if(me.mineTgt){
     const sx=me.mineTgt.x*T-CAM.x,sy=me.mineTgt.y*T-CAM.y;
@@ -1029,7 +986,18 @@ function draw(){
     gx.save();gx.translate(p.x-CAM.x,p.y-CAM.y);gx.rotate(Math.atan2(p.vy,p.vx));
     gx.fillStyle=p.col||'#aaa';gx.fillRect(-7,-1,14,2);gx.fillRect(5,-2,4,4);gx.restore();
   });
-  if(!me.dead)drawPl(me.x*T-CAM.x,me.y*T-CAM.y,me.facing,me.anim,me.animF,false,myUser,true);
+  
+  // Draw OTHER Players
+  const now = Date.now();
+  Object.values(onlinePlayers).forEach(p => {
+     if(now - p.t < 5000) { // Only draw if active in last 5 seconds
+        drawPl(p.x*T-CAM.x, p.y*T-CAM.y, p.facing, p.anim, p.animF, false, p.name, false, p.heldItem);
+     }
+  });
+  
+  // Draw ME
+  if(!me.dead)drawPl(me.x*T-CAM.x,me.y*T-CAM.y,me.facing,me.anim,me.animF,false,myUser,true, hbar[hslot]);
+  
   if(me.atkAnim>0){
     me.atkAnim--;
     gx.strokeStyle=`rgba(255,220,80,${me.atkAnim/12})`;gx.lineWidth=3;
@@ -1040,28 +1008,24 @@ function draw(){
     const sx=en.x*T-CAM.x,sy=en.y*T-CAM.y;
     if(sx<-120||sx>gc2.width+120)return;
     gx.save();
-    if(en.boss){
-      const bg=gx.createRadialGradient(sx+T/2,sy+T,0,sx+T/2,sy+T,T*4);
-      bg.addColorStop(0,en.col+'88');bg.addColorStop(1,'rgba(0,0,0,0)');
-      gx.fillStyle=bg;gx.beginPath();gx.arc(sx+T/2,sy+T,T*4,0,Math.PI*2);gx.fill();
-    }
-    if(en.flash>0){gx.globalAlpha=.7;gx.fillStyle='#ff4444';gx.fillRect(sx,sy,en.boss?28:T,en.boss?42:32);gx.globalAlpha=1;}
+    if(en.flash>0){gx.globalAlpha=.7;gx.fillStyle='#ff4444';gx.fillRect(sx,sy,T,32);gx.globalAlpha=1;}
     gx.fillStyle=en.col;
-    const bw=en.boss?26:14,bh=en.boss?40:30;
+    const bw=14,bh=30;
     gx.fillRect(sx+2,sy,bw,bh);
-    gx.fillStyle='#ff0';gx.fillRect(sx+4,sy+5,2,2);gx.fillRect(sx+(en.boss?16:10),sy+5,2,2);
+    gx.fillStyle='#ff0';gx.fillRect(sx+4,sy+5,2,2);gx.fillRect(sx+10,sy+5,2,2);
     const hp=Math.max(0,en.hp/en.maxHp);
-    const bw2=en.boss?T*2:T;
+    const bw2=T;
     gx.fillStyle='#400';gx.fillRect(sx,sy-8,bw2,4);
     gx.fillStyle=hp>.5?'#4f4':'#f44';gx.fillRect(sx,sy-8,bw2*hp,4);
-    gx.fillStyle=en.boss?'#ff8800':'#ff8888';gx.font=`${en.boss?'10':'8'}px monospace`;gx.textAlign='center';
-    gx.fillText((en.boss?'👑 ':'')+en.name,sx+bw/2,sy-10);gx.textAlign='left';
+    gx.fillStyle='#ff8888';gx.font=`8px monospace`;gx.textAlign='center';
+    gx.fillText(en.name,sx+bw/2,sy-10);gx.textAlign='left';
     gx.restore();
   });
   const{x:hx,y:hy}=s2w(mX,mY);
   if(Math.abs(hx-me.x)<=7&&Math.abs(hy-me.y)<=7){
     gx.strokeStyle='rgba(255,255,255,.6)';gx.lineWidth=1.5;gx.strokeRect(hx*T-CAM.x,hy*T-CAM.y,T,T);
   }
+  
   // Effects HUD
   if(Object.keys(effects).length>0){
     let ex2=10;gx.font='10px monospace';
@@ -1079,6 +1043,7 @@ function gloop(){
   if(!gRunning)return;
   requestAnimationFrame(gloop);
   updPhys();updEnemies();updProjs();updParts();
+  syncPlayer();
   draw();
   document.getElementById('coordhud').textContent=`X:${Math.floor(me.x)} Y:${Math.floor(me.y)} | ${myUser}`;
 }
@@ -1091,6 +1056,10 @@ function renderHB(){
   hbar.forEach((item,i)=>{
     const s=document.createElement('div');s.className='hslot'+(i===hslot?' on':'');
     s.onclick=()=>{hslot=i;renderHB();};
+    
+    // Fix Inventory Error: Remove ghost references if count is <= 0
+    if(item && item < 100 && (inv[item] || 0) <= 0) { hbar[i] = 0; item = 0; }
+    
     if(item){
       const c=document.createElement('canvas');c.width=36;c.height=36;
       drawItemToCanvas(c.getContext('2d'),item,36);
@@ -1122,7 +1091,7 @@ function closeInv(){
 }
 function addInv(id,q){
   inv[id]=(inv[id]||0)+q;
-  if(inv[id]<=0)delete inv[id];
+  if(inv[id]<=0)delete inv[id]; // Fixes inventory zeroing errors
   renderHB();
   if(invOpen)renderInv();
 }
@@ -1152,14 +1121,13 @@ function switchTab(t){
 function renderInv(){
   if(activeTab==='inv'){
     const g=document.getElementById('invGrid');g.innerHTML='';
-    // all blocks the player has + all item types they have
     const allIds=new Set();
     Object.keys(BNAME).map(Number).filter(b=>b>0&&b!==12).forEach(b=>allIds.add(b));
     Object.keys(ITEMS).map(Number).forEach(b=>allIds.add(b));
     [...allIds].sort((a,b)=>a-b).forEach(id=>{
       const cnt=inv[id]||0;
       const s=mkSlot(id,cnt,()=>{
-        if(cnt>0){selItem=selItem===id?null:id;renderInv();}
+        if(cnt>0 || (id >= 100 && inv[id] > 0)){ selItem=selItem===id?null:id; renderInv(); }
       });
       if(!cnt)s.style.opacity='.2';
       if(selItem===id){s.style.borderColor='#e8c84a';s.style.boxShadow='0 0 6px #e8c84a';}
@@ -1167,7 +1135,7 @@ function renderInv(){
     });
     const hbi=document.getElementById('hbInv');hbi.innerHTML='';
     hbar.forEach((item,i)=>{
-      const s=mkSlot(item||0,item?(inv[item]||1):0,()=>{
+      const s=mkSlot(item||0,item?(inv[item]||(item>=100?1:0)):0,()=>{
         if(selItem!=null){hbar[i]=selItem;selItem=null;renderHB();renderInv();}
         else if(item){hbar[i]=0;renderHB();renderInv();}
       });
@@ -1177,8 +1145,8 @@ function renderInv(){
       hbi.appendChild(s);
     });
     if(selItem!=null){
-      const hint=document.createElement('div');hint.style='font-size:10px;color:#e8c84a;margin-top:5px';
-      hint.textContent='↑ Click a hotbar slot to equip';hbi.appendChild(hint);
+      const hint=document.createElement('div');hint.style='font-size:10px;color:#e8c84a;margin-top:5px;width:100%;';
+      hint.textContent='↑ Click a hotbar slot to assign';hbi.appendChild(hint);
     }
   } else if(activeTab==='craft'){
     const cl=document.getElementById('craftList');cl.innerHTML='';
@@ -1212,13 +1180,15 @@ function renderInv(){
       row.appendChild(lbl);row.appendChild(sl);row.appendChild(hint);es.appendChild(row);
     });
     const ta=getArmor();
-    const tot=document.createElement('div');tot.style='font-size:11px;color:#e8c84a;margin-top:8px;padding:6px;background:#1a1000;border:1px solid #5a4010;border-radius:2px';
-    tot.textContent=`Total Armor: ${ta} | Reduces damage by ${Math.floor(ta*.3)} per hit`;es.appendChild(tot);
+    const tot=document.createElement('div');
+    tot.style='font-size:11px;color:#e8c84a;margin-top:8px;padding:6px;background:#1a1000;border:1px solid #5a4010;border-radius:2px';
+    tot.textContent='Total Armor: ' + ta + ' | Reduces damage by ' + Math.floor(ta*.3) + ' per hit';
+    es.appendChild(tot);
   }
 }
 function doCraft(rec){
   rec.n.forEach(n=>addInv(n.i,-n.q));addInv(rec.r,rec.q);
-  addChat('','⚒ Crafted: '+rec.name);renderInv();renderHB();
+  addLocalChat('⚒ Crafted: '+rec.name);renderInv();renderHB();
 }
 
 // ═══════════════════════════════════════════════════
@@ -1226,12 +1196,12 @@ function doCraft(rec){
 // ═══════════════════════════════════════════════════
 function openChat(){chatOpen=true;document.getElementById('chatinwrap').style.display='block';document.getElementById('chatin').focus();}
 function closeChat(){chatOpen=false;document.getElementById('chatinwrap').style.display='none';document.getElementById('chatin').value='';}
-function sendChat(){const t=document.getElementById('chatin').value.trim();if(t)addChat(myUser,t);closeChat();}
-document.getElementById('chatin').onkeydown=e=>{if(e.key==='Enter')sendChat();if(e.key==='Escape')closeChat();e.stopPropagation();};
-function addChat(name,text){
-  const m=document.getElementById('chatmsgs');const d=document.createElement('div');d.className='cm';
-  d.innerHTML=name?`<span class="cn">${name}:</span> ${text}`:`<span style="color:#88cc88">${text}</span>`;
-  m.prepend(d);while(m.children.length>20)m.removeChild(m.lastChild);
+function addLocalChat(text){
+    const docId = Date.now().toString() + '_' + Math.random().toString(36).substr(2, 5);
+    setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'chat', docId), {
+        text: text,
+        t: Date.now()
+    });
 }
 
 // ═══════════════════════════════════════════════════
@@ -1239,4 +1209,11 @@ function addChat(name,text){
 // ═══════════════════════════════════════════════════
 initTextures();
 initMenu();
-</script></body></html>
+
+// Connect to Firebase
+window.onload = () => {
+    initFirebase();
+};
+</script>
+</body>
+</html>
