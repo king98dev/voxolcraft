@@ -47,7 +47,7 @@ body{background:#000;overflow:hidden;font-family:'Courier New',monospace;color:#
 #chatin{width:100%;background:rgba(0,0,0,.85);border:1px solid #e8c84a;color:#fff;padding:5px 7px;font-family:'Courier New',monospace;font-size:11px;outline:none}
 #invPanel{position:fixed;inset:0;background:rgba(0,0,0,.88);display:flex;align-items:center;justify-content:center;z-index:30;pointer-events:all}
 #invPanel.hidden{display:none}
-.iwin{background:#0d0d0d;border:2px solid #7a5a10;border-radius:4px;padding:14px;display:flex;gap:14px}
+.iwin{background:#0d0d0d;border:2px solid #7a5a10;border-radius:4px;padding:16px;min-width:480px;max-width:580px}.itab{background:#111;border:1px solid #5a4010;color:#888;padding:7px 18px;font-family:'Courier New',monospace;font-size:11px;cursor:pointer;letter-spacing:1px;text-transform:uppercase}.itab.active{background:#2a1800;border-color:#e8c84a;color:#e8c84a}.iwin .isec h3{font-size:9px;color:#c8a030;letter-spacing:2px;text-transform:uppercase;margin-bottom:7px}.crecipe{display:flex;align-items:center;gap:8px;padding:6px 8px;background:#111;border:1px solid #222;border-radius:2px;cursor:pointer}.crecipe:hover{border-color:#888}.crecipe.can{border-color:#5a9e3a}.crecipe .rname{font-size:11px;color:#ccc;flex:1}.crecipe .rneeds{font-size:9px;color:#666;margin-top:2px}.crecipe .rbtn{font-size:11px;font-weight:700;padding:4px 10px;background:#1a3a0a;border:1px solid #5a9e3a;color:#88cc44;font-family:'Courier New',monospace;cursor:pointer;border-radius:2px}.crecipe.cant{opacity:.4;cursor:default}
 .isec h3{font-size:9px;color:#c8a030;letter-spacing:2px;text-transform:uppercase;margin-bottom:7px}
 .igrid{display:grid;grid-template-columns:repeat(10,42px);gap:3px}
 .cgrid{display:grid;grid-template-columns:repeat(3,42px);gap:3px}
@@ -111,15 +111,25 @@ body{background:#000;overflow:hidden;font-family:'Courier New',monospace;color:#
 <!-- INVENTORY -->
 <div id="invPanel" class="hidden">
 <div class="iwin">
-<div>
-<div class="isec"><h3>Inventory — click item then hotbar slot to equip (E closes)</h3>
-<div class="igrid" id="invGrid"></div></div>
-<div class="isec" style="margin-top:10px"><h3>Hotbar</h3>
-<div style="display:flex;gap:3px" id="hbInv"></div></div>
-</div>
-<div>
-<div class="isec"><h3>Crafting</h3><div class="cgrid" id="craftGrid"></div></div>
-</div>
+  <div style="display:flex;gap:0;margin-bottom:12px">
+    <button class="itab active" id="tab-inv" onclick="switchTab('inv')">🎒 Inventory</button>
+    <button class="itab" id="tab-craft" onclick="switchTab('craft')">⚒ Crafting</button>
+    <span style="flex:1"></span>
+    <span style="font-size:10px;color:#555;align-self:center">E or Esc to close</span>
+  </div>
+  <div id="tabInv">
+    <div class="isec"><h3>Your Items (click to select, then click hotbar slot below)</h3>
+    <div class="igrid" id="invGrid"></div></div>
+    <div class="isec" style="margin-top:10px"><h3>Hotbar — click slot to equip selected item | right-click to clear</h3>
+    <div style="display:flex;gap:3px;flex-wrap:wrap" id="hbInv"></div></div>
+  </div>
+  <div id="tabCraft" style="display:none">
+    <div class="isec"><h3>Recipes — green = craftable now, click to craft</h3>
+    <div id="craftList" style="display:flex;flex-direction:column;gap:5px;max-height:360px;overflow-y:auto;padding-right:4px"></div></div>
+  </div>
+  <div style="margin-top:10px;font-size:10px;color:#555;border-top:1px solid #1a1a1a;padding-top:8px">
+    <b style="color:#e8c84a">Controls:</b> WASD/Arrows=Move · Space=Jump · <b style="color:#aaa">Left Click=Mine</b> (hold) · <b style="color:#aaa">Right Click=Place</b> · <b style="color:#aaa">Left Click with Sword/Bow=Attack</b> · 1-9 or Scroll=Hotbar · E=Inventory · T=Chat · F=Use Potion
+  </div>
 </div>
 </div>
 
@@ -1014,30 +1024,78 @@ function mkSlot(id,count,onclick){
   return s;
 }
 
+let activeTab='inv';
+function switchTab(t){
+  activeTab=t;
+  document.getElementById('tabInv').style.display=t==='inv'?'block':'none';
+  document.getElementById('tabCraft').style.display=t==='craft'?'block':'none';
+  document.getElementById('tab-inv').className='itab'+(t==='inv'?' active':'');
+  document.getElementById('tab-craft').className='itab'+(t==='craft'?' active':'');
+  renderInv();
+}
 function renderInv(){
-  const g=document.getElementById('invGrid');g.innerHTML='';
-  const ids=[...new Set([...Object.keys(BNAME).map(Number).filter(b=>b>0),...Object.keys(ITEMS).map(Number)])];
-  ids.forEach(id=>{
-    const cnt=inv[id]||0;
-    const s=mkSlot(id,cnt,()=>{if(cnt>0){selItem=id;addChat('',`Selected ${id<100?BNAME[id]:ITEMS[id]?.name} → click hotbar slot to equip`);}});
-    g.appendChild(s);
-  });
-  // hotbar inv
-  const hbi=document.getElementById('hbInv');hbi.innerHTML='';
-  hbar.forEach((item,i)=>{
-    const s=mkSlot(item,item?1:0,()=>{if(selItem){hbar[i]=selItem;selItem=null;renderHB();renderInv();}else{hbar[i]=0;renderHB();renderInv();}});
-    s.style.borderColor=i===hslot?'#e8c84a':'';
-    hbi.appendChild(s);
-  });
-  // crafting
-  const cg=document.getElementById('craftGrid');cg.innerHTML='';
-  RECIPES.forEach(rec=>{
-    const can=rec.n.every(n=>(inv[n.i]||0)>=n.q);
-    const s=mkSlot(rec.r,can?rec.q:0,can?()=>doCraft(rec):null);
-    s.style.opacity=can?'1':'.4';s.style.cursor=can?'pointer':'default';
-    const nm=document.createElement('div');nm.className='tt';nm.textContent=rec.name+' | '+rec.n.map(n=>`${inv[n.i]||0}/${n.q} ${n.i<100?BNAME[n.i]:ITEMS[n.i]?.name}`).join(', ');s.appendChild(nm);
-    cg.appendChild(s);
-  });
+  if(activeTab==='inv'){
+    // Items grid - only show items player actually has
+    const g=document.getElementById('invGrid');g.innerHTML='';
+    const allIds=[...new Set([...Object.keys(BNAME).map(Number).filter(b=>b>0),...Object.keys(ITEMS).map(Number)])];
+    // show items with count first, then rest dimmed
+    const hasItems=allIds.filter(id=>(inv[id]||0)>0);
+    const noItems=allIds.filter(id=>!(inv[id]||0));
+    [...hasItems,...noItems].forEach(id=>{
+      const cnt=inv[id]||0;
+      const s=mkSlot(id,cnt,()=>{
+        if(cnt>0){
+          selItem=id;
+          // highlight all hotbar slots
+          document.querySelectorAll('#hbInv .isl').forEach(sl=>sl.style.boxShadow='0 0 0 2px #e8c84a');
+        }
+      });
+      if(!cnt)s.style.opacity='.25';
+      if(selItem===id)s.style.borderColor='#e8c84a';
+      g.appendChild(s);
+    });
+    // hotbar row
+    const hbi=document.getElementById('hbInv');hbi.innerHTML='';
+    hbar.forEach((item,i)=>{
+      const s=mkSlot(item,item?(inv[item]||1):0,()=>{
+        if(selItem!=null){hbar[i]=selItem;selItem=null;renderHB();renderInv();}
+        else if(item){hbar[i]=0;renderHB();renderInv();}
+      });
+      s.style.borderColor=i===hslot?'#e8c84a':'#333';
+      s.style.width='52px';s.style.height='52px';
+      // right click to clear
+      s.oncontextmenu=e=>{e.preventDefault();hbar[i]=0;renderHB();renderInv();};
+      hbi.appendChild(s);
+    });
+  } else {
+    // Crafting list
+    const cl=document.getElementById('craftList');cl.innerHTML='';
+    RECIPES.forEach(rec=>{
+      const can=rec.n.every(n=>(inv[n.i]||0)>=n.q);
+      const row=document.createElement('div');
+      row.className='crecipe '+(can?'can':'cant');
+      const ic=document.createElement('canvas');ic.width=32;ic.height=32;
+      const cx2=ic.getContext('2d');
+      if(rec.r<100){if(TEX[rec.r])cx2.drawImage(TEX[rec.r],0,0,32,32);else{cx2.fillStyle='#888';cx2.fillRect(0,0,32,32);}}
+      else{const it=ITEMS[rec.r];cx2.fillStyle=it.col;cx2.fillRect(4,4,24,24);}
+      row.appendChild(ic);
+      const info=document.createElement('div');info.style.flex='1';
+      const rname=document.createElement('div');rname.className='rname';rname.textContent=`${rec.name} ×${rec.q}`;
+      const rneeds=document.createElement('div');rneeds.className='rneeds';
+      rneeds.textContent='Needs: '+rec.n.map(n=>{
+        const have=inv[n.i]||0;const need=n.q;
+        const nm=n.i<100?BNAME[n.i]:ITEMS[n.i]?.name;
+        return `${have}/${need} ${nm}`;
+      }).join(' · ');
+      rneeds.style.color=can?'#6ab04c':'#884444';
+      info.appendChild(rname);info.appendChild(rneeds);row.appendChild(info);
+      if(can){
+        const btn=document.createElement('button');btn.className='rbtn';btn.textContent='CRAFT';
+        btn.onclick=()=>doCraft(rec);row.appendChild(btn);
+      }
+      cl.appendChild(row);
+    });
+  }
 }
 function doCraft(rec){rec.n.forEach(n=>addInv(n.i,-n.q));addInv(rec.r,rec.q);addChat('',`⚒ Crafted ${rec.name}`);renderInv();renderHB();}
 
