@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>VoxelCraft</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#000;color:#fff;font-family:'Courier New',monospace;overflow:hidden}
+canvas{display:block}
+
+/* ── AUTH SCREEN ── */
+#auth{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:linear-gradient(180deg,#0a2a0a,#000);z-index:100}
+#auth.hidden{display:none}
+.logo{font-size:56px;font-weight:900;color:#5cdb2f;text-shadow:3px 3px 0 #1a5a0a;letter-spacing:-2px;margin-bottom:4px}
+.logo-sub{color:#6ab04c;font-size:11px;letter-spacing:5px;margin-bottom:36px}
+.box{background:rgba(0,0,0,0.75);border:2px solid #2a4a1a;border-radius:3px;padding:28px 36px;width:340px}
+.box h2{font-size:13px;color:#6ab04c;letter-spacing:2px;text-transform:uppercase;margin-bottom:20px}
+.f{margin-bottom:14px}
+.f label{display:block;font-size:10px;color:#6ab04c;letter-spacing:1px;text-transform:uppercase;margin-bottom:5px}
+.f input{width:100%;background:#071507;border:1px solid #2a4a1a;color:#b8ffb0;padding:9px 11px;
+  font-family:'Courier New',monospace;font-size:13px;outline:none;border-radius:2px}
+.f input:focus{border-color:#5cdb2f}
+.gbtn{width:100%;background:#1a4a0a;border:2px solid #5cdb2f;color:#b8ffb0;padding:11px;
+  font-family:'Courier New',monospace;font-size:13px;font-weight:700;letter-spacing:2px;
+  text-transform:uppercase;cursor:pointer;border-radius:2px;margin-top:4px}
+.gbtn:hover{background:#2a6010}
+.switch{font-size:11px;color:#6ab04c;margin-top:12px;text-align:center;cursor:pointer}
+.switch span{text-decoration:underline}
+.err{font-size:11px;color:#ff6b6b;margin-top:8px;min-height:16px;text-align:center}
+
+/* ── HUD ── */
+#hud{position:fixed;inset:0;pointer-events:none;z-index:10}
+#hud.hidden{display:none}
+
+/* crosshair */
+#crosshair{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  width:20px;height:20px}
+#crosshair::before,#crosshair::after{content:'';position:absolute;background:rgba(255,255,255,0.8)}
+#crosshair::before{width:2px;height:20px;left:9px;top:0}
+#crosshair::after{width:20px;height:2px;top:9px;left:0}
+
+/* hotbar */
+#hotbar{position:absolute;bottom:16px;left:50%;transform:translateX(-50%);
+  display:flex;gap:4px;background:rgba(0,0,0,0.5);padding:4px;border-radius:3px;pointer-events:all}
+.hslot{width:52px;height:52px;background:rgba(0,0,0,0.4);border:2px solid #555;
+  border-radius:2px;display:flex;align-items:center;justify-content:center;flex-direction:column;
+  position:relative;cursor:pointer;font-size:9px;color:#aaa}
+.hslot.active{border-color:#fff}
+.hslot canvas{border-radius:1px}
+
+/* health */
+#health{position:absolute;bottom:80px;left:50%;transform:translateX(-50%);
+  display:flex;gap:3px}
+.heart{font-size:16px}
+
+/* debug / coords */
+#coords{position:absolute;top:8px;left:8px;font-size:11px;color:#0f0;background:rgba(0,0,0,0.5);
+  padding:4px 8px;border-radius:2px;line-height:1.6}
+
+/* chat */
+#chat-box{position:absolute;bottom:80px;left:8px;width:320px;pointer-events:none}
+#chat-msgs{font-size:12px;line-height:1.5;max-height:120px;overflow:hidden;display:flex;flex-direction:column-reverse}
+.cmsg{background:rgba(0,0,0,0.4);padding:2px 6px;margin-bottom:2px;border-radius:2px}
+.cmsg .cname{color:#5cdb2f}
+#chat-input-wrap{pointer-events:all;margin-top:4px;display:none}
+#chat-input{width:100%;background:rgba(0,0,0,0.7);border:1px solid #5cdb2f;color:#fff;
+  padding:5px 8px;font-family:'Courier New',monospace;font-size:12px;outline:none;border-radius:2px}
+
+/* players list */
+#players-list{position:absolute;top:8px;right:8px;font-size:11px;background:rgba(0,0,0,0.5);
+  padding:6px 10px;border-radius:2px;line-height:1.8;color:#aaa}
+#players-list b{color:#5cdb2f}
+
+/* inventory */
+#inv{position:fixed;inset:0;background:rgba(0,0,0,0.7);display:flex;align-items:center;
+  justify-content:center;z-index:50;pointer-events:all}
+#inv.hidden{display:none}
+.inv-grid{display:grid;grid-template-columns:repeat(9,54px);gap:4px}
+.islot{width:54px;height:54px;background:rgba(0,0,0,0.5);border:2px solid #555;
+  border-radius:2px;display:flex;align-items:center;justify-content:center;
+  flex-direction:column;cursor:pointer;font-size:9px;color:#aaa;position:relative}
+.islot:hover{border-color:#aaa}
+.islot .count{position:absolute;bottom:2px;right:4px;font-size:10px;color:#fff;font-weight:700}
+.inv-panel{background:#111;border:2px solid #444;border-radius:4px;padding:16px}
+.inv-panel h3{font-size:12px;color:#6ab04c;letter-spacing:2px;margin-bottom:10px;text-transform:uppercase}
+</style>
+</head>
+<body>
+
+<!-- AUTH -->
+<div id="auth">
+  <div class="logo">VoxelCraft</div>
+  <div class="logo-sub">MULTIPLAYER EDITION</div>
+  <div class="box" id="login-box">
+    <h2>Login</h2>
+    <div class="f"><label>Username</label><input id="l-user" autocomplete="username" /></div>
+    <div class="f"><label>Password</label><input id="l-pass" type="password" autocomplete="current-password" /></div>
+    <button class="gbtn" onclick="doLogin()">Enter World</button>
+    <div class="err" id="l-err"></div>
+    <div class="switch" onclick="showReg()">No account? <span>Register</span></div>
+  </div>
+  <div class="box hidden" id="reg-box">
+    <h2>Register</h2>
+    <div class="f"><label>Username</label><input id="r-user" autocomplete="username" /></div>
+    <div class="f"><label>Password (min 4)</label><input id="r-pass" type="password" autocomplete="new-password" /></div>
+    <button class="gbtn" onclick="doRegister()">Create Account</button>
+    <div class="err" id="r-err"></div>
+    <div class="switch" onclick="showLogin()">Have an account? <span>Login</span></div>
+  </div>
+</div>
+
+<!-- GAME -->
+<div id="hud" class="hidden">
+  <div id="crosshair"></div>
+  <div id="health"></div>
+  <div id="hotbar"></div>
+  <div id="coords"></div>
+  <div id="chat-box">
+    <div id="chat-msgs"></div>
+    <div id="chat-input-wrap"><input id="chat-input" placeholder="Press T to chat..." maxlength="120" /></div>
+  </div>
+  <div id="players-list"><b>Players</b><br><span id="plist"></span></div>
+</div>
+<div id="inv" class="hidden">
+  <div class="inv-panel">
+    <h3>Inventory (E to close)</h3>
+    <div class="inv-grid" id="inv-grid"></div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+// ─────────────────────────────────────────────────────────────────────────────
+// CONFIG
+// ─────────────────────────────────────────────────────────────────────────────
+const WS_URL = location.protocol==='https:' ? 'wss://'+location.host : 'ws://'+location.host;
+
+// Block types
+const B = {AIR:0,GRASS:1,DIRT:2,STONE:3,WOOD:4,LEAVES:5,SAND:6,WATER:7,
+           COAL:8,IRON:9,GOLD:10,DIAMOND:11,BEDROCK:12,PLANKS:13,GLASS:14,BRICK:15};
+
+const BLOCK_COLORS = {
+  1:'#4a7c3f',2:'#8B5E3C',3:'#888',4:'#8B6914',5:'#2d6e2d',6:'#e8d5a3',
+  7:'#2255cc',8:'#333',9:'#aaa',10:'#ffd700',11:'#00e5ff',12:'#222',
+  13:'#c8a96e',14:'#aaddff',15:'#b55',
+};
+const BLOCK_NAMES = {
+  0:'Air',1:'Grass',2:'Dirt',3:'Stone',4:'Wood',5:'Leaves',6:'Sand',7:'Water',
+  8:'Coal Ore',9:'Iron Ore',10:'Gold Ore',11:'Diamond Ore',12:'Bedrock',
+  13:'Planks',14:'Glass',15:'Brick',
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// AUTH UI
+// ─────────────────────────────────────────────────────────────────────────────
+let ws, token, myUsername;
+
+function showReg(){ document.getElementById('login-box').classList.add('hidden'); document.getElementById('reg-box').classList.remove('hidden'); }
+function showLogin(){ document.getElementById('reg-box').classList.add('hidden'); document.getElementById('login-box').classList.remove('hidden'); }
+
+function doLogin(){
+  const u=document.getElementById('l-user').value.trim();
+  const p=document.getElementById('l-pass').value;
+  if(!u||!p){ document.getElementById('l-err').textContent='Fill all fields'; return; }
+  connectAndSend({type:'login',username:u,password:p},'l-err');
+}
+function doRegister(){
+  const u=document.getElementById('r-user').value.trim();
+  const p=document.getElementById('r-pass').value;
+  if(!u||!p){ document.getElementById('r-err').textContent='Fill all fields'; return; }
+  if(p.length<4){ document.getElementById('r-err').textContent='Password min 4 chars'; return; }
+  connectAndSend({type:'register',username:u,password:p},'r-err');
+}
+
+function connectAndSend(msg, errId){
+  if(ws && ws.readyState===1){ ws.send(JSON.stringify(msg)); return; }
+  ws = new WebSocket(WS_URL);
+  ws.onopen = () => ws.send(JSON.stringify(msg));
+  ws.onerror = () => document.getElementById(errId).textContent='Cannot connect to server';
+  ws.onmessage = onMessage;
+  ws.onclose = () => { if(gameStarted) addChat('System','Disconnected from server'); };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GAME STATE
+// ─────────────────────────────────────────────────────────────────────────────
+let gameStarted = false;
+let scene, camera, renderer, clock;
+let chunkMeshes = {};      // "cx,cz" -> THREE.Mesh
+let blockWorld = {};       // "x,y,z" -> blockId
+let otherPlayers = {};     // username -> THREE.Mesh
+let myPlayer = { x:0,y:20,z:0, yaw:0, pitch:0, health:20, vy:0, onGround:false };
+let inventory = {};        // blockId -> count
+let hotbar = [B.PLANKS, B.GLASS, B.BRICK, B.WOOD, B.STONE, 0, 0, 0, 0];
+let hotbarSlot = 0;
+let chatOpen = false;
+let invOpen = false;
+let loadedChunks = new Set();
+
+const keys = {};
+let yawDelta=0, pitchDelta=0;
+let locked = false;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SERVER MESSAGES
+// ─────────────────────────────────────────────────────────────────────────────
+function onMessage(e){
+  const msg = JSON.parse(e.data);
+  switch(msg.type){
+    case 'auth_fail':
+      document.getElementById('l-err').textContent = msg.reason;
+      document.getElementById('r-err').textContent = msg.reason;
+      break;
+    case 'auth_ok':
+      token = msg.token;
+      myUsername = msg.username;
+      if(msg.account.inventory) inventory = msg.account.inventory;
+      if(msg.account.hotbar) hotbar = msg.account.hotbar;
+      ws.send(JSON.stringify({type:'join', token}));
+      break;
+    case 'joined':
+      myPlayer.x = msg.player.x;
+      myPlayer.y = msg.player.y;
+      myPlayer.z = msg.player.z;
+      startGame();
+      msg.others.forEach(op => spawnOtherPlayer(op));
+      updatePlayerList();
+      break;
+    case 'chunk':
+      mergeChunk(msg.blocks);
+      rebuildChunk(msg.cx, msg.cz);
+      break;
+    case 'world_edits':
+      Object.assign(blockWorld, msg.blocks);
+      // Rebuild affected chunks
+      const dirty = new Set();
+      for(const key of Object.keys(msg.blocks)){
+        const [x,,z]=key.split(',').map(Number);
+        dirty.add(`${Math.floor(x/16)},${Math.floor(z/16)}`);
+      }
+      dirty.forEach(ck=>{ const [cx,cz]=ck.split(',').map(Number); rebuildChunk(cx,cz); });
+      break;
+    case 'set_block':
+      setBlockLocal(msg.x,msg.y,msg.z,msg.block);
+      break;
+    case 'player_join':
+      spawnOtherPlayer(msg);
+      addChat('','§ '+msg.username+' joined');
+      updatePlayerList();
+      break;
+    case 'player_leave':
+      if(otherPlayers[msg.username]){ scene.remove(otherPlayers[msg.username]); delete otherPlayers[msg.username]; }
+      addChat('','§ '+msg.username+' left');
+      updatePlayerList();
+      break;
+    case 'player_move':
+      if(otherPlayers[msg.username]){
+        const m = otherPlayers[msg.username];
+        m.position.set(msg.x, msg.y+0.9, msg.z);
+        m.rotation.y = msg.yaw;
+      }
+      break;
+    case 'chat':
+      addChat(msg.username, msg.text);
+      break;
+  }
+}
+
+function mergeChunk(blocks){ Object.assign(blockWorld, blocks); }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// THREE.JS INIT
+// ─────────────────────────────────────────────────────────────────────────────
+function startGame(){
+  document.getElementById('auth').classList.add('hidden');
+  document.getElementById('hud').classList.remove('hidden');
+  gameStarted = true;
+
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x87ceeb);
+  scene.fog = new THREE.Fog(0x87ceeb, 40, 120);
+
+  camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.05, 200);
+
+  renderer = new THREE.WebGLRenderer({antialias:true});
+  renderer.setSize(innerWidth, innerHeight);
+  renderer.shadowMap.enabled = true;
+  document.body.insertBefore(renderer.domElement, document.body.firstChild);
+
+  // Lighting
+  const amb = new THREE.AmbientLight(0xffffff, 0.6);
+  scene.add(amb);
+  const sun = new THREE.DirectionalLight(0xffffff, 0.8);
+  sun.position.set(50, 80, 30);
+  sun.castShadow = true;
+  scene.add(sun);
+
+  clock = new THREE.Clock();
+  setupInput();
+  renderHotbar();
+  renderHealth();
+  animate();
+
+  // request chunks around spawn
+  requestChunksAround(Math.floor(myPlayer.x/16), Math.floor(myPlayer.z/16));
+
+  // save inv periodically
+  setInterval(saveInv, 15000);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CHUNK BUILDING
+// ─────────────────────────────────────────────────────────────────────────────
+const faceNormals = [
+  [0,1,0],[0,-1,0],[1,0,0],[-1,0,0],[0,0,1],[0,0,-1]
+];
+const faceVerts = [
+  // top
+  [[0,1,0],[1,1,0],[1,1,1],[0,1,1]],
+  // bottom
+  [[0,0,1],[1,0,1],[1,0,0],[0,0,0]],
+  // right (+x)
+  [[1,0,0],[1,0,1],[1,1,1],[1,1,0]],
+  // left (-x)
+  [[0,0,1],[0,0,0],[0,1,0],[0,1,1]],
+  // front (+z)
+  [[0,0,1],[1,0,1],[1,1,1],[0,1,1]],  // fixed winding
+  // back (-z)
+  [[1,0,0],[0,0,0],[0,1,0],[1,1,0]],
+];
+// Normals are wrong for merged mesh but lighting still looks ok with vertex colors
+const faceUVs=[[0,1],[1,1],[1,0],[0,0]];
+
+function hexToRgb(hex){
+  const r=parseInt(hex.slice(1,3),16)/255;
+  const g=parseInt(hex.slice(3,5),16)/255;
+  const b=parseInt(hex.slice(5,7),16)/255;
+  return [r,g,b];
+}
+
+function getBlock(x,y,z){
+  const key=`${x},${y},${z}`;
+  return blockWorld[key]!==undefined ? blockWorld[key] : -1; // -1=not loaded
+}
+
+function rebuildChunk(cx,cz){
+  const key=`${cx},${cz}`;
+  if(chunkMeshes[key]){ scene.remove(chunkMeshes[key]); chunkMeshes[key].geometry.dispose(); }
+
+  const positions=[], colors=[], indices=[], normals=[];
+  let vi=0;
+
+  for(let lx=0;lx<16;lx++){
+    for(let lz=0;lz<16;lz++){
+      for(let y=0;y<64;y++){
+        const wx=cx*16+lx, wz=cz*16+lz;
+        const b=getBlock(wx,y,wz);
+        if(!b || b===B.AIR) continue;
+        const col=hexToRgb(BLOCK_COLORS[b]||'#888');
+
+        faceNormals.forEach(([nx,ny,nz],fi)=>{
+          const nb=getBlock(wx+nx,y+ny,wz+nz);
+          if(nb!==0 && nb!==-1) return; // face hidden
+          // slight shading by face
+          const shade=[0.9,0.7,0.85,0.85,0.8,0.8][fi];
+          const verts=faceVerts[fi];
+          verts.forEach(([vx,vy,vz])=>{
+            positions.push(wx+vx,y+vy,wz+vz);
+            colors.push(col[0]*shade,col[1]*shade,col[2]*shade);
+            normals.push(nx,ny,nz);
+          });
+          indices.push(vi,vi+1,vi+2, vi,vi+2,vi+3);
+          vi+=4;
+        });
+      }
+    }
+  }
+
+  if(positions.length===0) return;
+  const geo=new THREE.BufferGeometry();
+  geo.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
+  geo.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));
+  geo.setAttribute('normal',new THREE.Float32BufferAttribute(normals,3));
+  geo.setIndex(indices);
+  const mat=new THREE.MeshLambertMaterial({vertexColors:true,side:THREE.FrontSide});
+  const mesh=new THREE.Mesh(geo,mat);
+  mesh.castShadow=true; mesh.receiveShadow=true;
+  scene.add(mesh);
+  chunkMeshes[key]=mesh;
+}
+
+function requestChunksAround(cx,cz){
+  for(let dx=-4;dx<=4;dx++) for(let dz=-4;dz<=4;dz++){
+    const key=`${cx+dx},${cz+dz}`;
+    if(!loadedChunks.has(key)){
+      loadedChunks.add(key);
+      ws.send(JSON.stringify({type:'get_chunk',cx:cx+dx,cz:cz+dz}));
+    }
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// OTHER PLAYERS (simple box)
+// ─────────────────────────────────────────────────────────────────────────────
+function spawnOtherPlayer({username,x,y,z}){
+  if(otherPlayers[username]) scene.remove(otherPlayers[username]);
+  const geo=new THREE.BoxGeometry(0.6,1.8,0.6);
+  const mat=new THREE.MeshLambertMaterial({color:0x2244ff});
+  const mesh=new THREE.Mesh(geo,mat);
+  mesh.position.set(x,y+0.9,z);
+  scene.add(mesh);
+  otherPlayers[username]=mesh;
+
+  // name label (canvas texture)
+  const canvas=document.createElement('canvas');
+  canvas.width=128; canvas.height=32;
+  const ctx=canvas.getContext('2d');
+  ctx.fillStyle='rgba(0,0,0,0.6)'; ctx.fillRect(0,0,128,32);
+  ctx.fillStyle='#fff'; ctx.font='bold 18px monospace';
+  ctx.textAlign='center'; ctx.fillText(username,64,22);
+  const tex=new THREE.CanvasTexture(canvas);
+  const lmat=new THREE.SpriteMaterial({map:tex,depthTest:false});
+  const sprite=new THREE.Sprite(lmat);
+  sprite.scale.set(1.5,0.4,1);
+  sprite.position.set(0,1.4,0);
+  mesh.add(sprite);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// INPUT
+// ─────────────────────────────────────────────────────────────────────────────
+function setupInput(){
+  document.addEventListener('keydown',e=>{
+    if(chatOpen){
+      if(e.key==='Enter'){ sendChat(); return; }
+      if(e.key==='Escape'){ closeChatInput(); return; }
+      return;
+    }
+    if(invOpen){ if(e.key==='e'||e.key==='Escape'){ closeInv(); } return; }
+    keys[e.key]=true;
+    if(e.key==='t'||e.key==='T'){ openChatInput(); return; }
+    if(e.key==='e'||e.key==='E'){ openInv(); return; }
+    if(e.key==='Escape'&&locked){ document.exitPointerLock(); }
+    const n=parseInt(e.key);
+    if(n>=1&&n<=9){ hotbarSlot=n-1; renderHotbar(); }
+    if(e.key===' '&&myPlayer.onGround){ myPlayer.vy=8; myPlayer.onGround=false; }
+  });
+  document.addEventListener('keyup',e=>{ keys[e.key]=false; });
+
+  renderer.domElement.addEventListener('click',e=>{
+    if(!locked){ renderer.domElement.requestPointerLock(); return; }
+    handleClick(e.button);
+  });
+  renderer.domElement.addEventListener('contextmenu',e=>{ e.preventDefault(); if(locked) handleClick(2); });
+  document.addEventListener('mousemove',e=>{
+    if(!locked) return;
+    yawDelta   -= e.movementX * 0.002;
+    pitchDelta -= e.movementY * 0.002;
+    pitchDelta  = Math.max(-1.4, Math.min(1.4, pitchDelta));
+  });
+  document.addEventListener('pointerlockchange',()=>{ locked=!!document.pointerLockElement; });
+
+  // Hotbar scroll
+  renderer.domElement.addEventListener('wheel',e=>{
+    hotbarSlot=(hotbarSlot+(e.deltaY>0?1:-1)+9)%9;
+    renderHotbar();
+  });
+
+  window.addEventListener('resize',()=>{
+    camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix();
+    renderer.setSize(innerWidth,innerHeight);
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RAYCASTING — block selection
+// ─────────────────────────────────────────────────────────────────────────────
+function raycast(){
+  const dir=new THREE.Vector3(0,0,-1);
+  dir.applyEuler(new THREE.Euler(pitchDelta,yawDelta,0,'YXZ'));
+  const origin=new THREE.Vector3(myPlayer.x,myPlayer.y+1.6,myPlayer.z);
+  let best=null, bestD=Infinity;
+
+  for(let d=0.5;d<6;d+=0.1){
+    const p=origin.clone().addScaledVector(dir,d);
+    const bx=Math.floor(p.x),by=Math.floor(p.y),bz=Math.floor(p.z);
+    const b=getBlock(bx,by,bz);
+    if(b>0){
+      const dist=d;
+      if(dist<bestD){ bestD=dist; best={bx,by,bz,dist,dir,p}; }
+      break;
+    }
+  }
+  return best;
+}
+
+function handleClick(button){
+  const hit=raycast();
+  if(!hit) return;
+  if(button===0){ // break
+    breakBlock(hit.bx,hit.by,hit.bz);
+  } else { // place
+    const norm=new THREE.Vector3(0,0,0);
+    // find normal by stepping back slightly
+    const p2=hit.p.clone().addScaledVector(hit.dir,-0.1);
+    const px2=Math.floor(p2.x),py2=Math.floor(p2.y),pz2=Math.floor(p2.z);
+    const px=hit.bx+(px2!==hit.bx?px2-hit.bx:0);
+    const py=hit.by+(py2!==hit.by?py2-hit.by:0);
+    const pz=hit.bz+(pz2!==hit.bz?pz2-hit.bz:0);
+    const placeX=hit.bx+(px2-hit.bx||0);
+    const placeY=hit.by+(py2-hit.by||0);
+    const placeZ=hit.bz+(pz2-hit.bz||0);
+    placeBlock(placeX===hit.bx&&placeY===hit.by&&placeZ===hit.bz
+      ? hit.bx+(py2<hit.by?0:0): placeX,
+      placeY===hit.by&&py2<hit.by?hit.by+1:placeY===hit.by?hit.by-1:placeY,
+      placeZ, hotbar[hotbarSlot]);
+  }
+}
+
+function breakBlock(x,y,z){
+  const b=getBlock(x,y,z);
+  if(!b||b===B.AIR||b===B.BEDROCK) return;
+  // Add to inventory
+  inventory[b]=(inventory[b]||0)+1;
+  renderHotbar(); renderInvGrid();
+  setBlockLocal(x,y,z,0);
+  ws.send(JSON.stringify({type:'set_block',x,y,z,block:0}));
+}
+
+function placeBlock(x,y,z,blockId){
+  if(!blockId) return;
+  // Check not placing inside self
+  const px=Math.floor(myPlayer.x),py=Math.floor(myPlayer.y),pz=Math.floor(myPlayer.z);
+  if(x===px&&(y===py||y===py+1)&&z===pz) return;
+  setBlockLocal(x,y,z,blockId);
+  ws.send(JSON.stringify({type:'set_block',x,y,z,block:blockId}));
+}
+
+function setBlockLocal(x,y,z,block){
+  const key=`${x},${y},${z}`;
+  if(block===0) delete blockWorld[key]; else blockWorld[key]=block;
+  rebuildChunk(Math.floor(x/16),Math.floor(z/16));
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PHYSICS + MOVEMENT
+// ─────────────────────────────────────────────────────────────────────────────
+const GRAVITY=20, SPEED=5, JUMP=8;
+let lastChunkCX=999,lastChunkCZ=999;
+let lastSent=0;
+
+function updatePhysics(dt){
+  if(chatOpen||invOpen) return;
+
+  const fwd=new THREE.Vector3(-Math.sin(yawDelta),0,-Math.cos(yawDelta));
+  const right=new THREE.Vector3(Math.cos(yawDelta),0,-Math.sin(yawDelta));
+  const move=new THREE.Vector3();
+
+  if(keys['w']||keys['W']) move.add(fwd);
+  if(keys['s']||keys['S']) move.sub(fwd);
+  if(keys['a']||keys['A']) move.sub(right);
+  if(keys['d']||keys['D']) move.add(right);
+  if(move.length()>0) move.normalize().multiplyScalar(SPEED*dt);
+
+  // Gravity
+  myPlayer.vy -= GRAVITY*dt;
+  myPlayer.y += myPlayer.vy*dt;
+
+  // Ground collision
+  const bx=Math.floor(myPlayer.x), by=Math.floor(myPlayer.y), bz=Math.floor(myPlayer.z);
+  const underBlock=getBlock(bx,by-1,bz);
+  if(underBlock>0&&underBlock!==B.AIR&&myPlayer.vy<0){
+    myPlayer.y=by; myPlayer.vy=0; myPlayer.onGround=true;
+  } else { myPlayer.onGround=false; }
+
+  // Horizontal collision (simple)
+  myPlayer.x+=move.x;
+  myPlayer.z+=move.z;
+
+  // Camera
+  camera.position.set(myPlayer.x, myPlayer.y+1.62, myPlayer.z);
+  camera.rotation.set(pitchDelta, yawDelta, 0, 'YXZ');
+
+  // Update coords
+  document.getElementById('coords').innerHTML=
+    `X:${myPlayer.x.toFixed(1)} Y:${myPlayer.y.toFixed(1)} Z:${myPlayer.z.toFixed(1)}<br>${myUsername}`;
+
+  // Request new chunks
+  const cx=Math.floor(myPlayer.x/16), cz=Math.floor(myPlayer.z/16);
+  if(cx!==lastChunkCX||cz!==lastChunkCZ){
+    lastChunkCX=cx; lastChunkCZ=cz;
+    requestChunksAround(cx,cz);
+  }
+
+  // Send position to server (throttled)
+  const now=Date.now();
+  if(now-lastSent>100){
+    lastSent=now;
+    ws.send(JSON.stringify({type:'move',x:myPlayer.x,y:myPlayer.y,z:myPlayer.z,yaw:yawDelta,pitch:pitchDelta}));
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// HUD
+// ─────────────────────────────────────────────────────────────────────────────
+function renderHotbar(){
+  const el=document.getElementById('hotbar');
+  el.innerHTML='';
+  hotbar.forEach((b,i)=>{
+    const slot=document.createElement('div');
+    slot.className='hslot'+(i===hotbarSlot?' active':'');
+    slot.onclick=()=>{ hotbarSlot=i; renderHotbar(); };
+    if(b){
+      const c=document.createElement('canvas');
+      c.width=36; c.height=36;
+      const ctx=c.getContext('2d');
+      ctx.fillStyle=BLOCK_COLORS[b]||'#888';
+      ctx.fillRect(4,4,28,28);
+      ctx.fillStyle='rgba(255,255,255,0.15)';
+      ctx.fillRect(4,4,28,8);
+      slot.appendChild(c);
+      const n=document.createElement('span');
+      n.textContent=BLOCK_NAMES[b]?.slice(0,6)||'';
+      slot.appendChild(n);
+    }
+    el.appendChild(slot);
+  });
+}
+
+function renderHealth(){
+  const el=document.getElementById('health');
+  el.innerHTML='';
+  for(let i=0;i<10;i++){
+    const h=document.createElement('span');
+    h.className='heart';
+    h.textContent=i<Math.ceil(myPlayer.health/2)?'❤':'🖤';
+    el.appendChild(h);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// INVENTORY
+// ─────────────────────────────────────────────────────────────────────────────
+function openInv(){
+  invOpen=true;
+  if(locked) document.exitPointerLock();
+  document.getElementById('inv').classList.remove('hidden');
+  renderInvGrid();
+}
+function closeInv(){
+  invOpen=false;
+  document.getElementById('inv').classList.add('hidden');
+}
+function renderInvGrid(){
+  if(!invOpen) return;
+  const grid=document.getElementById('inv-grid');
+  grid.innerHTML='';
+  // All possible blocks
+  const allBlocks=Object.keys(BLOCK_NAMES).map(Number).filter(b=>b>0);
+  allBlocks.forEach(b=>{
+    const count=inventory[b]||0;
+    const slot=document.createElement('div');
+    slot.className='islot';
+    const c=document.createElement('canvas');
+    c.width=36;c.height=36;
+    const ctx=c.getContext('2d');
+    if(count>0){ ctx.fillStyle=BLOCK_COLORS[b]||'#888'; ctx.fillRect(4,4,28,28); }
+    else{ ctx.fillStyle='#333'; ctx.fillRect(4,4,28,28); }
+    slot.appendChild(c);
+    const n=document.createElement('div');
+    n.style.fontSize='9px';n.style.color='#aaa';n.textContent=BLOCK_NAMES[b];
+    slot.appendChild(n);
+    if(count>0){ const cnt=document.createElement('div');cnt.className='count';cnt.textContent=count;slot.appendChild(cnt); }
+    // Click: add to hotbar
+    slot.onclick=()=>{
+      if(count<=0) return;
+      hotbar[hotbarSlot]=b;
+      renderHotbar();
+    };
+    grid.appendChild(slot);
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CHAT
+// ─────────────────────────────────────────────────────────────────────────────
+function openChatInput(){
+  chatOpen=true;
+  if(locked) document.exitPointerLock();
+  document.getElementById('chat-input-wrap').style.display='block';
+  document.getElementById('chat-input').focus();
+}
+function closeChatInput(){
+  chatOpen=false;
+  document.getElementById('chat-input-wrap').style.display='none';
+  document.getElementById('chat-input').value='';
+}
+function sendChat(){
+  const inp=document.getElementById('chat-input');
+  const text=inp.value.trim();
+  if(text) ws.send(JSON.stringify({type:'chat',text}));
+  closeChatInput();
+}
+function addChat(name,text){
+  const msgs=document.getElementById('chat-msgs');
+  const div=document.createElement('div');
+  div.className='cmsg';
+  div.innerHTML=name?`<span class="cname">${name}:</span> ${text}`:`<span style="color:#8bc34a">${text}</span>`;
+  msgs.prepend(div);
+  // Keep only 20
+  while(msgs.children.length>20) msgs.removeChild(msgs.lastChild);
+}
+
+function updatePlayerList(){
+  const names=[myUsername,...Object.keys(otherPlayers)];
+  document.getElementById('plist').textContent=names.join('\n');
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SAVE
+// ─────────────────────────────────────────────────────────────────────────────
+function saveInv(){
+  if(!ws||ws.readyState!==1) return;
+  ws.send(JSON.stringify({type:'save_inv',inventory,hotbar}));
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GAME LOOP
+// ─────────────────────────────────────────────────────────────────────────────
+function animate(){
+  requestAnimationFrame(animate);
+  const dt=Math.min(clock.getDelta(),0.1);
+  if(gameStarted) updatePhysics(dt);
+  renderer.render(scene,camera);
+}
+
+// enter on login
+document.getElementById('l-pass').addEventListener('keydown',e=>{ if(e.key==='Enter') doLogin(); });
+document.getElementById('r-pass').addEventListener('keydown',e=>{ if(e.key==='Enter') doRegister(); });
+</script>
+</body>
+</html>
