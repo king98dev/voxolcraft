@@ -223,7 +223,7 @@ window.doJoin = async () => {
 async function loadPlayerData() {
     if (!userId) return;
     try {
-        const saveRef = doc(db, 'artifacts', appId, 'users', userId, 'save');
+        const saveRef = doc(db, 'artifacts', appId, 'users', userId, 'saveData', 'default');
         const snap = await getDoc(saveRef);
         if (snap.exists()) {
             const data = snap.data();
@@ -245,7 +245,7 @@ async function loadPlayerData() {
 async function savePlayerData() {
     if(!userId || !gRunning || me.dead) return;
     try {
-        const saveRef = doc(db, 'artifacts', appId, 'users', userId, 'save');
+        const saveRef = doc(db, 'artifacts', appId, 'users', userId, 'saveData', 'default');
         await setDoc(saveRef, {
             inventory: inv,
             hotbar: hbar,
