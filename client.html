@@ -467,10 +467,26 @@ function drawCharPreview(){
   drawCharacter(ctx,20,10,1,'idle',0,charCfg,false,null,4);
 }
 function confirmChar(){
-  if(token)snd({type:'save_data',token,character:charCfg});
-  charChanged=true;
-  showScreen('gameScreen');
-  startActualGame();
+  if(token) snd({type:'save_data',token,character:charCfg});
+  if(isSingleplayer){
+    showScreen('gameScreen');
+    genWorld(Math.floor(Math.random()*99999));
+    _doStartGame();
+    spawnLocalMobs();
+  } else {
+    // Show loading screen while waiting for server 'joined' response
+    showScreen('gameScreen');
+    const ctx2=gc.getContext('2d');
+    gc.width=innerWidth; gc.height=innerHeight-68;
+    ctx2.fillStyle='#000'; ctx2.fillRect(0,0,gc.width,gc.height);
+    ctx2.fillStyle='#e8c84a'; ctx2.font='bold 22px monospace';
+    ctx2.textAlign='center';
+    ctx2.fillText('Joining world...', gc.width/2, gc.height/2-20);
+    ctx2.fillStyle='#666'; ctx2.font='13px monospace';
+    ctx2.fillText('Connecting to server', gc.width/2, gc.height/2+10);
+    ctx2.textAlign='left';
+    snd({type:'join', token});
+  }
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -515,22 +531,24 @@ function onMsg(e){
     case 'auth_fail':document.getElementById('le').textContent=m.reason;document.getElementById('re').textContent=m.reason;break;
     case 'auth_ok':
       token=m.token;myUser=m.username;
-      if(m.account?.inventory)inv=m.account.inventory;
-      if(m.account?.hotbar)hbar=[...m.account.hotbar];
-      if(m.account?.armor)armor={...m.account.armor};
+      // Load saved data - only use what server has (no starter items)
+      inv=m.account?.inventory||{};
+      hbar=m.account?.hotbar?[...m.account.hotbar]:[0,0,0,0,0,0,0,0,0];
+      armor=m.account?.armor||{head:0,chest:0,legs:0,feet:0};
       if(m.account?.character)charCfg={...m.account.character};
       showScreen('charScreen');initCharEditor();
       // store token to use after char confirm
-      pendingJoin=true;
+      // auth ok, show char screen
       break;
     case 'joined':
-      me.x=m.player.x;me.y=m.player.y;
+      me.x=m.player.x; me.y=m.player.y;
       genWorld(m.seed||1234);
-      if(m.worldEdits)Object.entries(m.worldEdits).forEach(([k,v])=>{const[x,y]=k.split(',').map(Number);sw(x,y,v);});
-      if(m.mobs)syncMobs(m.mobs);
-      startActualGame();
+      if(m.worldEdits) Object.entries(m.worldEdits).forEach(([k,v])=>{const[x,y]=k.split(',').map(Number);sw(x,y,v);});
+      if(m.mobs) syncMobs(m.mobs);
+      if(!gRunning) _doStartGame(); // only start once
       m.others.forEach(op=>spawnOther(op));
       updPlHud();
+      addChat('','Welcome back, '+myUser+'! Hold left-click to mine. Right-click to place. E=inventory.');
       break;
     case 'world_edits':Object.entries(m.blocks).forEach(([k,v])=>{const[x,y]=k.split(',').map(Number);sw(x,y,v);});break;
     case 'set_block':sw(m.x,m.y,m.block);break;
@@ -550,8 +568,7 @@ function onMsg(e){
     case 'chat':addChat(m.username,m.text);break;
   }
 }
-let pendingJoin=false;
-let charChanged=false;
+// auth flow handled by confirmChar -> joined -> _doStartGame
 
 // ═══════════════════════════════════════════════════════════
 // SINGLEPLAYER
@@ -672,7 +689,7 @@ let me={x:10,y:40,vx:0,vy:0,onGround:false,health:100,maxHp:100,mana:100,maxMana
   spX:10,spY:40,effects:{}};
 let others={};
 let inv={};
-let hbar=[0,0,0,0,0,0,0,0,0];
+let hbar=[0,0,0,0,0,0,0,0,0]; // empty hotbar - no starter loot
 let armor={head:0,chest:0,legs:0,feet:0};
 let hslot=0;
 let parts=[],projs=[],mobs=[],hits=[];
@@ -688,13 +705,9 @@ function getArmorDef(){return (ITEMS[armor.head]?.def||0)+(ITEMS[armor.chest]?.d
 // START GAME
 // ═══════════════════════════════════════════════════════════
 function startActualGame(){
+  // This is now only called for singleplayer directly
+  // Multiplayer goes through confirmChar -> snd join -> onMsg joined -> _doStartGame
   if(gRunning)return;
-  if(pendingJoin&&!isSingleplayer){
-    snd({type:'join',token});
-    pendingJoin=false;
-    return; // wait for 'joined' message
-  }
-  // Singleplayer
   if(isSingleplayer){
     genWorld(Math.floor(Math.random()*99999));
     showScreen('gameScreen');
@@ -704,17 +717,27 @@ function startActualGame(){
 }
 function _doStartGame(){
   if(gRunning)return;
-  gc.width=innerWidth;gc.height=innerHeight-68;gRunning=true;
-  // find surface spawn
-  for(let y=0;y<H;y++){if(isSolid(gb(Math.floor(me.x),y))){me.y=y-2;me.spX=me.x;me.spY=y-2;break;}}
-  setupInput();renderHB();renderHP();renderArmorBar();
+  gRunning=true;
+  gc.width=innerWidth; gc.height=innerHeight-68;
+  // find spawn on surface
+  const sx=Math.floor(me.x);
+  for(let y=0;y<H;y++){
+    if(isSolid(gb(sx,y))){
+      me.y=y-2; me.spX=me.x; me.spY=y-2;
+      break;
+    }
+  }
+  setupInput();
+  renderHB();
+  renderHP();
+  renderArmorBar();
   requestAnimationFrame(gloop);
+  // Position/save interval
   setInterval(()=>{
-    if(!isSingleplayer)snd({type:'move',x:me.x,y:me.y,facing:me.facing,anim:me.anim});
+    if(!isSingleplayer) snd({type:'move',x:me.x,y:me.y,facing:me.facing,anim:me.anim});
     autoSave();
   },3000);
-  // Greet
-  setTimeout(()=>addChat('','Welcome! WASD=move, Space=jump, Left Click=mine+attack, Right Click=place, E=inventory, T=chat'),800);
+  setTimeout(()=>addChat('','WASD=move · Space=jump · Hold Left Click=mine+attack · Right Click=place block · E=inventory · T=chat · Q=drop'),1200);
 }
 function autoSave(){
   if(isSingleplayer){
@@ -788,6 +811,11 @@ function setupInput(){
     if(e.key==='e'||e.key==='E'){openInv();return;}
     if(e.key==='t'||e.key==='T'){openChat();return;}
     if(e.key==='f'||e.key==='F'){usePot();return;}
+    if(e.key==='q'||e.key==='Q'){
+      if(invOpen&&selItem){dropItem(selItem);}
+      else{dropItem();}
+      return;
+    }
     // Hotbar 1-9
     const n=parseInt(e.key);
     if(n>=1&&n<=9){hslot=n-1;renderHB();return;}
@@ -1004,6 +1032,20 @@ function respawnAtSpawn(){
   me.x=me.spX; me.y=me.spY; me.vx=0; me.vy=0;
   renderHP();
 }
+
+function dropItem(specific){
+  const id=specific||(invOpen?selItem:hbar[hslot]);
+  if(!id||!inv[id])return;
+  const amt=e_shiftDrop?Math.min(10,inv[id]||0):1;
+  addInv(id,-amt);
+  // Spawn dropped item as a world particle so it looks like a drop
+  spawnParts(me.x*T+9, me.y*T+9, null, 4, id<100?id:0);
+  addChat('','Dropped '+amt+'x '+(id<100?BNAME[id]:ITEMS[id]?.name||'Item'));
+  if(invOpen){selItem=null;renderInv();}
+}
+let e_shiftDrop=false;
+window.addEventListener('keydown',e=>{if(e.key==='Shift')e_shiftDrop=true;});
+window.addEventListener('keyup',e=>{if(e.key==='Shift')e_shiftDrop=false;});
 
 function usePot(){
   const held=hbar[hslot];const it=ITEMS[held];if(!it||it.type!=='potion'||(inv[held]||0)<1)return;
@@ -1392,7 +1434,11 @@ function closeInv(){
 function addInv(id,q){
   if(!id||id===0)return;
   inv[id]=(inv[id]||0)+q;
-  if(inv[id]<=0)delete inv[id];
+  if(inv[id]<=0){
+    delete inv[id];
+    // Clear hotbar slots that held this item if count is now 0
+    hbar=hbar.map(h=>h===id?0:h);
+  }
   renderHB();
   if(invOpen)renderInv();
 }
@@ -1407,15 +1453,24 @@ function switchTab(t){
 }
 
 function mkIsl(id,cnt,onclick,extraClass){
-  const s=document.createElement('div');s.className='isl'+(extraClass?' '+extraClass:'');
+  const s=document.createElement('div');
+  s.className='isl'+(extraClass?' '+extraClass:'');
+  s.style.position='relative';
   const c=document.createElement('canvas');c.width=38;c.height=38;drawItemIcon(c.getContext('2d'),id,38);s.appendChild(c);
-  if(cnt>1||cnt===undefined){const cc=document.createElement('div');cc.className='sc';cc.textContent=cnt>999?'99+':cnt;s.appendChild(cc);}
+  // Count badge
+  if(cnt&&cnt>0){
+    const cc=document.createElement('div');cc.className='sc';
+    cc.textContent=cnt>999?'99+':cnt;s.appendChild(cc);
+  }
+  // Tooltip
   const tt=document.createElement('div');tt.className='tt';
   const it=id<100?{name:BNAME[id]}:ITEMS[id];
   const rc=it?.rarity?`<span style="color:${RARITY_COL[it.rarity]}">[${it.rarity}]</span> `:'';
-  tt.innerHTML=rc+(it?.name||'?')+(it?.dmg?` DMG:${it.dmg}`:'')+(it?.def?` DEF:${it.def}`:'')+(it?.pow?` PWR:${it.pow}`:'');
+  tt.innerHTML=rc+(it?.name||'?')+(it?.dmg?` ⚔${it.dmg}`:'')+(it?.def?` 🛡${it.def}`:'')+(it?.pow?` ⛏${it.pow}`:'')+'<br><span style="color:#888">Q=drop · click=select</span>';
   s.appendChild(tt);
   if(onclick)s.onclick=onclick;
+  // Right click = drop 1
+  s.oncontextmenu=e=>{e.preventDefault();dropItem(id);};
   if(selItem===id)s.classList.add('sel');
   return s;
 }
@@ -1426,16 +1481,18 @@ function renderInv(){
     // Show everything player has mined/crafted/collected
     const hasItems=Object.keys(inv).map(Number).filter(id=>inv[id]>0);
     if(!hasItems.length){
-      g.innerHTML='<div style="color:#555;font-size:11px;padding:8px">Nothing yet! Mine blocks by holding left click on them.</div>';
+      g.innerHTML='<div style="color:#555;font-size:11px;padding:12px;text-align:center">🪨 Nothing yet!<br><span style="color:#444">Hold left click on blocks to mine them.</span></div>';
     } else {
+      hasItems.sort((a,b)=>b-a); // blocks first, items second
       hasItems.forEach(id=>{
         const cnt=inv[id];
+        if(!cnt||cnt<=0)return; // skip empty
         const s=mkIsl(id,cnt,()=>{
           selItem=(selItem===id?null:id);
           renderInv();
-          if(selItem) addChat('','Click a hotbar slot below to equip '+( id<100?BNAME[id]:ITEMS[id]?.name));
+          if(selItem) addChat('','Selected — click hotbar slot to equip, or Q to drop');
         });
-        if(selItem===id)s.style.outline='2px solid #e8c84a';
+        if(selItem===id){s.style.outline='2px solid #e8c84a';s.style.background='#1a1000';}
         g.appendChild(s);
       });
     }
