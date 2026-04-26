@@ -73,7 +73,7 @@ body{background:#000;overflow:hidden;font-family:'Courier New',monospace;color:#
 .recipe-row.can .recipe-needs{color:#6ab04c}
 .craft-btn{background:#1a4a0a;border:1px solid #5a9e3a;color:#88cc44;font-family:'Courier New',monospace;font-size:10px;padding:4px 10px;cursor:pointer;border-radius:2px}
 /* DEATH */
-#deathScreen{position:fixed;inset:0;background:rgba(50,0,0,.88);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:40}
+#deathScreen{position:fixed;inset:0;background:rgba(40,0,0,.92);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9000;backdrop-filter:blur(2px)}
 #deathScreen.hidden{display:none}
 #deathScreen h2{font-size:52px;color:#ff4444;text-shadow:3px 3px 0 #800;margin-bottom:12px}
 /* CHAT */
@@ -186,8 +186,15 @@ body{background:#000;overflow:hidden;font-family:'Courier New',monospace;color:#
 </div>
 
 <div id="deathScreen" class="hidden">
-<h2>YOU DIED</h2><p id="dmsg" style="color:#ffaaaa;font-size:14px;margin-bottom:24px"></p>
-<button class="gbtn" style="width:200px" onclick="respawn()">RESPAWN</button>
+<div style="text-align:center;position:relative;z-index:2">
+  <div style="font-size:64px;margin-bottom:8px">💀</div>
+  <h2 style="font-size:48px;color:#ff4444;text-shadow:3px 3px 0 #800;margin-bottom:8px">YOU DIED</h2>
+  <p id="dmsg" style="color:#ffaaaa;font-size:15px;margin-bottom:6px"></p>
+  <p id="dstats" style="color:#888;font-size:12px;margin-bottom:28px"></p>
+  <button class="gbtn" style="width:220px;font-size:16px;padding:14px;margin-bottom:10px" onclick="respawn()">⚡ RESPAWN</button>
+  <br>
+  <button class="bbtn" style="width:220px;color:#888" onclick="respawnAtSpawn()">🏠 Respawn at Spawn</button>
+</div>
 </div>
 
 <script>
@@ -763,15 +770,31 @@ const MOB_STATS={
 // ═══════════════════════════════════════════════════════════
 function setupInput(){
   window.addEventListener('keydown',e=>{
-    if(chatOpen){if(e.key==='Enter'){sendChat();return;}if(e.key==='Escape'){closeChat();return;}return;}
-    if(invOpen){if(e.key==='e'||e.key==='Escape'){closeInv();return;}return;}
+    if(!gRunning)return; // ignore keys before game starts
+    // Prevent browser defaults for game keys
+    if(['e','E','t','T','f','F',' ','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)) e.preventDefault();
+    // Chat mode
+    if(chatOpen){
+      if(e.key==='Enter'){sendChat();return;}
+      if(e.key==='Escape'){closeChat();return;}
+      return; // eat all other keys in chat
+    }
+    // Inventory open
+    if(invOpen){
+      if(e.key==='e'||e.key==='E'||e.key==='Escape'){closeInv();return;}
+      return; // eat all other keys in inv
+    }
+    // Game keys
     if(e.key==='e'||e.key==='E'){openInv();return;}
     if(e.key==='t'||e.key==='T'){openChat();return;}
-    if(e.key==='f'||e.key==='F'){usePot();}
-    const n=parseInt(e.key);if(n>=1&&n<=9){hslot=n-1;renderHB();}
+    if(e.key==='f'||e.key==='F'){usePot();return;}
+    // Hotbar 1-9
+    const n=parseInt(e.key);
+    if(n>=1&&n<=9){hslot=n-1;renderHB();return;}
     keys[e.key]=true;
   });
-  window.addEventListener('keyup',e=>{keys[e.key]=false;});
+  window.addEventListener('keyup',e=>{ delete keys[e.key]; });
+  // keyup handled above
   gc.addEventListener('mousemove',ev=>{const r=gc.getBoundingClientRect();mX=ev.clientX-r.left;mY=ev.clientY-r.top;});
   gc.addEventListener('mousedown',ev=>{
     if(ev.button===0){mDown=true;}
@@ -842,51 +865,72 @@ function doMineAndAtk(){
 
   // ── AOE ATTACK (4 block radius, every 18 frames) ──
   if(me.atkTimer<=0){
-    me.atkTimer=18;me.atkAnim=16;me.anim='swing';
+    me.atkTimer=6; me.atkAnim=8; me.anim='swing';
     const str=me.effects.strength?1.8:1;
-    // Show AOE ring centered on player
-    hits.push({x:me.x*T-CAM.x+9, y:me.y*T-CAM.y+16, r:AOE_RADIUS*T, life:1.2});
-    // Hit mobs in radius
+    // AOE ring visual (world coords stored, converted in draw)
+    hits.push({wx:me.x, wy:me.y, r:AOE_RADIUS*T, life:1.2});
+
+    let hitAnything=false;
     mobs.forEach(mob=>{
       const dx=mob.x-me.x, dy=mob.y-me.y;
       const dist=Math.sqrt(dx*dx+dy*dy);
       if(dist<AOE_RADIUS){
-        const d=Math.max(1,Math.round(dmg*str*(1-dist/(AOE_RADIUS+1))));
-        mob.hp-=d; mob.flash=10;
-        // knockback away from player
-        const nx=dist>0?dx/dist:0, ny=dist>0?dy/dist:-1;
-        mob.vx+=nx*kb*0.15; mob.vy-=kb*0.3;
-        spawnParts(mob.x*T,mob.y*T,mob.col||'#f44',5);
+        hitAnything=true;
+        const d=Math.max(1,Math.round(dmg*str));
+        mob.hp-=d;
+        mob.flash=12;
+        // Strong knockback - push directly away from player
+        const nx=dist>0.01?dx/dist:(Math.random()>.5?1:-1);
+        const ny=dist>0.01?dy/dist:0;
+        mob.vx=nx*kb*1.2;   // strong horizontal push
+        mob.vy=-Math.abs(kb)*0.8; // always launch upward too
+        spawnParts(mob.x*T, mob.y*T, mob.col||'#f44', 8);
+        addChat('','Hit '+mob.type+' for '+d+' dmg!');
         if(!isSingleplayer) snd({type:'mob_hit',mobId:mob.id,dmg:d});
         if(mob.hp<=0) killMob(mob);
       }
     });
-    // PvP in radius
+
+    // PvP
     Object.entries(others).forEach(([u,op])=>{
       const dx=op.x-me.x, dy=op.y-me.y;
       const dist=Math.sqrt(dx*dx+dy*dy);
       if(dist<AOE_RADIUS){
         const d=Math.max(1,Math.round(dmg*str));
-        snd({type:'player_hit',target:u,dmg:d,attacker:myUser,kb:{x:dx*kb,y:-3}});
-        spawnParts(op.x*T,op.y*T,'#ff4444',4);
+        snd({type:'player_hit',target:u,dmg:d,attacker:myUser,kb:{x:dx*kb*2,y:-5}});
+        spawnParts(op.x*T,op.y*T,'#ff4444',6);
       }
     });
+
+    if(!hitAnything && Object.keys(others).length===0 && mobs.filter(m=>{const dx=m.x-me.x,dy=m.y-me.y;return Math.sqrt(dx*dx+dy*dy)<AOE_RADIUS;}).length===0){
+      // swing miss sound effect via chat (subtle)
+    }
   }
 
   // ── MINE block at cursor (hold to mine) ──
   const b=gb(x,y);
-  if(b&&b!==B.AIR&&b!==B.WATER&&Math.abs(x-me.x)<=7&&Math.abs(y-me.y)<=7){
-    if(!me.mineTgt||me.mineTgt.x!==x||me.mineTgt.y!==y){me.mineTgt={x,y};me.mineTimer=0;}
-    me.mineTimer+=pow;
-    if(me.mineTimer>=(BHARD[b]||1)*28){
-      me.mineTimer=0; me.mineTgt=null;
+  const inRange=Math.abs(x-me.x)<=7&&Math.abs(y-me.y)<=7;
+  if(b&&b!==B.AIR&&b!==B.WATER&&inRange){
+    if(!me.mineTgt||me.mineTgt.x!==x||me.mineTgt.y!==y){
+      me.mineTgt={x,y};
+      me.mineTimer=0;
+    }
+    me.mineTimer+=Math.max(1,pow);
+    const hardness=(BHARD[b]||1)*28;
+    if(me.mineTimer>=hardness){
+      me.mineTimer=0;
+      me.mineTgt=null;
       sw(x,y,B.AIR);
-      if(!isSingleplayer) snd({type:'set_block',x,y,block:B.AIR});
-      addInv(b,1); // block goes into inventory
+      if(!isSingleplayer)snd({type:'set_block',x,y,block:B.AIR});
+      // Give block to player inventory
+      if(b!==B.BEDROCK){
+        addInv(b,1);
+        addChat('','+ 1 '+( BNAME[b]||'Block'));
+      }
       spawnParts(x*T+9,y*T+9,null,6,b);
     }
   } else {
-    me.mineTgt=null;
+    if(!inRange)me.mineTgt=null;
   }
 }
 
@@ -941,8 +985,25 @@ function takeDmg(dmg,src){
   if(me.health<=0){me.health=0;die(src);}renderHP();
 }
 function die(k){me.dead=true;if(!isSingleplayer)snd({type:'player_died',killer:k||'unknown'});showDeath(k);}
-function showDeath(k){document.getElementById('deathScreen').classList.remove('hidden');document.getElementById('dmsg').textContent=`Killed by ${k||'unknown'}`;}
-function respawn(){document.getElementById('deathScreen').classList.add('hidden');me.dead=false;me.health=me.maxHp;me.mana=me.maxMana;me.x=me.spX;me.y=me.spY;me.vx=0;me.vy=0;renderHP();}
+function showDeath(k){
+  document.getElementById('deathScreen').classList.remove('hidden');
+  document.getElementById('dmsg').textContent='Killed by '+(k||'unknown');
+  const armorDef=getArmorDef();
+  document.getElementById('dstats').textContent=
+    'Armor Defense: '+armorDef+' | Tip: '+(armorDef<5?'Craft some armor to survive longer!':'Get better armor!');
+}
+function respawn(){
+  document.getElementById('deathScreen').classList.add('hidden');
+  me.dead=false; me.health=Math.floor(me.maxHp*0.5); me.mana=me.maxMana;
+  me.vx=0; me.vy=0;
+  renderHP();
+}
+function respawnAtSpawn(){
+  document.getElementById('deathScreen').classList.add('hidden');
+  me.dead=false; me.health=me.maxHp; me.mana=me.maxMana;
+  me.x=me.spX; me.y=me.spY; me.vx=0; me.vy=0;
+  renderHP();
+}
 
 function usePot(){
   const held=hbar[hslot];const it=ITEMS[held];if(!it||it.type!=='potion'||(inv[held]||0)<1)return;
@@ -988,8 +1049,9 @@ function updMobs(){
     // AI
     if(dist<30&&!me.dead){mob.vx+=(dx/dist)*mob.spd;}
     else if(Math.random()<.012){mob.vx=(Math.random()-.5)*0.08;}
-    mob.vx=Math.max(-0.18,Math.min(0.18,mob.vx));
-    mob.vx*=0.82;
+    // Only cap normal movement speed, not knockback
+    if(Math.abs(mob.vx)<0.2) mob.vx=Math.max(-0.18,Math.min(0.18,mob.vx));
+    mob.vx*=0.88; // slower friction so knockback travels further
 
     if(!mob.fly){
       // Gravity
@@ -1013,19 +1075,21 @@ function updMobs(){
       if(isSolid(gb(Math.floor(mob.x),Math.floor(mob.y)+1))){mob.y=Math.floor(mob.y);mob.vy=0;mob.onGround=true;}
 
       // X movement + collision
-      const nextX=mob.x+mob.vx;
-      const nbx=mob.vx>0?Math.floor(nextX)+1:Math.floor(nextX)-1;
-      const my1=Math.floor(mob.y);const my2=Math.floor(mob.y)+1;
-      if(isSolid(gb(nbx,my1))||isSolid(gb(nbx,my2))){
-        // try to step up 1 block
-        if(!isSolid(gb(nbx,my1-1))&&mob.onGround){
-          mob.vy=-4.5; // hop up
-          mob.x+=mob.vx; // still move
+      const steps=Math.ceil(Math.abs(mob.vx)*2); // sub-step for fast knockback
+      const stepVx=mob.vx/steps;
+      for(let si=0;si<steps;si++){
+        const nextX=mob.x+stepVx;
+        const nbx=stepVx>0?Math.floor(nextX)+1:Math.floor(nextX)-1;
+        const my1=Math.floor(mob.y);const my2=Math.floor(mob.y)+1;
+        if(isSolid(gb(nbx,my1))||isSolid(gb(nbx,my2))){
+          if(!isSolid(gb(nbx,my1-1))&&mob.onGround){
+            mob.vy=-4.5;mob.x+=stepVx;
+          } else {
+            mob.vx=0;break;
+          }
         } else {
-          mob.vx=0; // blocked
+          mob.x=nextX;
         }
-      } else {
-        mob.x=nextX;
       }
 
     } else {
@@ -1036,7 +1100,14 @@ function updMobs(){
 
     if(mob.x<BARRIER_X+1)mob.x=BARRIER_X+1;
     if(mob.y>H-3)mob.y=H-3;
-    if(dist<1.8&&!me.dead)takeDmg(mob.dmg/30,mob.type);
+    // Damage cooldown: only hurt player once per second per mob
+    if(dist<1.8&&!me.dead){
+      if(!mob.dmgCooldown||mob.dmgCooldown<=0){
+        takeDmg(mob.dmg, mob.type);
+        mob.dmgCooldown=60; // 60 frames = ~1 second
+      }
+    }
+    if(mob.dmgCooldown>0)mob.dmgCooldown--;
     if(mob.flash>0)mob.flash--;
   });
   mobs=mobs.filter(m=>m.hp>0);
@@ -1187,8 +1258,18 @@ function draw(){
   parts.forEach(p=>{gx.globalAlpha=p.life;if(p.blkId&&TEX[p.blkId]){gx.drawImage(TEX[p.blkId],p.x-CAM.x,p.y-CAM.y,p.size*1.5,p.size*1.5);}else{gx.fillStyle=p.col||'#aaa';gx.fillRect(p.x-CAM.x,p.y-CAM.y,p.size,p.size);}});
   gx.restore();gx.globalAlpha=1;
 
-  // Hit rings
-  hits.forEach(h=>{gx.strokeStyle=`rgba(255,150,0,${h.life})`;gx.lineWidth=2;gx.beginPath();gx.arc(h.x,h.y,h.r,0,Math.PI*2);gx.stroke();});
+  // Hit rings (support both world-coord wx/wy and screen-coord x/y)
+  hits.forEach(h=>{
+    const sx=h.wx!==undefined ? h.wx*T-CAM.x+9 : h.x;
+    const sy=h.wy!==undefined ? h.wy*T-CAM.y+16 : h.y;
+    gx.strokeStyle=`rgba(255,150,0,${h.life})`;
+    gx.lineWidth=3;
+    gx.beginPath();gx.arc(sx,sy,h.r,0,Math.PI*2);gx.stroke();
+    // Inner flash
+    gx.strokeStyle=`rgba(255,220,100,${h.life*0.5})`;
+    gx.lineWidth=1;
+    gx.beginPath();gx.arc(sx,sy,h.r*0.5,0,Math.PI*2);gx.stroke();
+  });
 
   // Projectiles
   projs.forEach(p=>{
@@ -1294,9 +1375,27 @@ function updPlHud(){document.getElementById('plbox').innerHTML='<b style="color:
 // ═══════════════════════════════════════════════════════════
 // INVENTORY
 // ═══════════════════════════════════════════════════════════
-function openInv(){invOpen=true;document.getElementById('invPanel').classList.remove('hidden');renderInv();}
-function closeInv(){invOpen=false;document.getElementById('invPanel').classList.add('hidden');selItem=null;}
-function addInv(id,q){inv[id]=(inv[id]||0)+q;if(inv[id]<=0)delete inv[id];renderHB();if(invOpen)renderInv();}
+function openInv(){
+  invOpen=true;
+  activeTab='inv';
+  const panel=document.getElementById('invPanel');
+  panel.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.92);display:flex;align-items:center;justify-content:center;z-index:9999;pointer-events:all';
+  renderInv();
+}
+function closeInv(){
+  invOpen=false;
+  selItem=null;
+  const panel=document.getElementById('invPanel');
+  panel.style.display='none';
+  panel.classList.add('hidden');
+}
+function addInv(id,q){
+  if(!id||id===0)return;
+  inv[id]=(inv[id]||0)+q;
+  if(inv[id]<=0)delete inv[id];
+  renderHB();
+  if(invOpen)renderInv();
+}
 
 function switchTab(t){
   activeTab=t;
@@ -1399,14 +1498,40 @@ function doCraft(rec){rec.n.forEach(n=>addInv(n.i,-n.q));addInv(rec.r,rec.q);add
 // ═══════════════════════════════════════════════════════════
 // CHAT
 // ═══════════════════════════════════════════════════════════
-function openChat(){chatOpen=true;document.getElementById('chatinwrap').style.display='block';document.getElementById('chatin').focus();}
-function closeChat(){chatOpen=false;document.getElementById('chatinwrap').style.display='none';document.getElementById('chatin').value='';}
-function sendChat(){const t=document.getElementById('chatin').value.trim();if(t&&!isSingleplayer)snd({type:'chat',text:t});else if(t)addChat(myUser,t);closeChat();}
+function openChat(){
+  chatOpen=true;
+  const wrap=document.getElementById('chatinwrap');
+  wrap.style.display='block';
+  const inp=document.getElementById('chatin');
+  inp.style.cssText='width:100%;background:rgba(0,0,0,.9);border:1px solid #e8c84a;color:#fff;padding:5px 8px;font-family:Courier New,monospace;font-size:12px;outline:none;z-index:9999';
+  setTimeout(()=>inp.focus(),10);
+}
+function closeChat(){
+  chatOpen=false;
+  document.getElementById('chatinwrap').style.display='none';
+  document.getElementById('chatin').value='';
+}
+function sendChat(){
+  const inp=document.getElementById('chatin');
+  const t=inp.value.trim();
+  if(t){
+    if(!isSingleplayer) snd({type:'chat',text:t});
+    addChat(myUser,t); // always show own message immediately
+  }
+  closeChat();
+}
 document.getElementById('chatin').onkeydown=e=>{if(e.key==='Enter')sendChat();if(e.key==='Escape')closeChat();e.stopPropagation();};
 function addChat(name,text){
-  const m=document.getElementById('chatmsgs');const d=document.createElement('div');d.className='cm';
-  d.innerHTML=name?`<span class="cn">${name}:</span> ${text}`:`<span style="color:#88cc88">${text}</span>`;
-  m.prepend(d);while(m.children.length>20)m.removeChild(m.lastChild);
+  const m=document.getElementById('chatmsgs');
+  const d=document.createElement('div');
+  d.className='cm';
+  d.style.cssText='font-size:11px;background:rgba(0,0,0,.75);padding:3px 7px;margin-bottom:2px;border-radius:2px;border-left:2px solid '+(name?'#e8c84a':'#44cc44');
+  d.innerHTML=name?`<span style="color:#e8c84a;font-weight:700">${name}:</span> <span style="color:#fff">${text}</span>`:`<span style="color:#88cc88">${text}</span>`;
+  m.prepend(d);
+  while(m.children.length>20) m.removeChild(m.lastChild);
+  // fade out after 6 seconds
+  setTimeout(()=>{d.style.opacity='0';d.style.transition='opacity 1s';},6000);
+  setTimeout(()=>{if(d.parentNode)d.remove();},7000);
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -1414,74 +1539,4 @@ function addChat(name,text){
 // ═══════════════════════════════════════════════════════════
 initTex();
 initMenu();
-// After auth_ok -> charScreen -> confirmChar() -> startActualGame()
-// For MP: startActualGame sends 'join', waits for 'joined', then calls _doStartGame
-// Patch: after 'joined' received, call _doStartGame instead of startActualGame
-const _origOnMsg=onMsg;
-ws2=null; // reset
-// Override joined to call _doStartGame
-function onMsg(e){
-  const m=JSON.parse(e.data);
-  if(m.type==='joined'){
-    token&&(pendingJoin=false);
-    me.x=m.player.x;me.y=m.player.y;
-    genWorld(m.seed||1234);
-    if(m.worldEdits)Object.entries(m.worldEdits).forEach(([k,v])=>{const[x,y]=k.split(',').map(Number);sw(x,y,v);});
-    if(m.mobs)syncMobs(m.mobs);
-    showScreen('gameScreen');
-    _doStartGame();
-    m.others.forEach(op=>spawnOther(op));
-    updPlHud();
-    return;
-  }
-  if(m.type==='auth_ok'){
-    token=m.token;myUser=m.username;
-    if(m.account?.inventory)inv=m.account.inventory;
-    if(m.account?.hotbar)hbar=[...m.account.hotbar];
-    if(m.account?.armor)armor={...m.account.armor};
-    if(m.account?.character)charCfg={...m.account.character};
-    showScreen('charScreen');initCharEditor();pendingJoin=true;return;
-  }
-  if(m.type==='auth_fail'){document.getElementById('le').textContent=m.reason;document.getElementById('re').textContent=m.reason;return;}
-  if(m.type==='world_edits'){Object.entries(m.blocks).forEach(([k,v])=>{const[x,y]=k.split(',').map(Number);sw(x,y,v);});return;}
-  if(m.type==='set_block'){sw(m.x,m.y,m.block);return;}
-  if(m.type==='player_join'){spawnOther(m);addChat('',`⚡ ${m.username} joined`);updPlHud();return;}
-  if(m.type==='player_leave'){delete others[m.username];addChat('',`💨 ${m.username} left`);updPlHud();return;}
-  if(m.type==='player_move'){if(others[m.username]){const o=others[m.username];o.tx=m.x;o.ty=m.y;o.facing=m.facing||1;o.anim=m.anim||'idle';}return;}
-  if(m.type==='player_hit'){if(m.target===myUser){takeDmg(m.dmg,m.attacker);if(m.kb){me.vx+=m.kb.x;me.vy+=m.kb.y;}}if(others[m.target])others[m.target].flash=10;return;}
-  if(m.type==='player_died'){if(m.username===myUser)showDeath(m.killer);else addChat('',`💀 ${m.username} killed by ${m.killer}`);return;}
-  if(m.type==='mob_update'){syncMobs(m.mobs);return;}
-  if(m.type==='mob_hit'){const mob=mobs.find(mb=>mb.id===m.mobId);if(mob){mob.hp=m.hp;mob.flash=8;if(mob.hp<=0){spawnParts(mob.x*T,mob.y*T,mob.col,10);mobs=mobs.filter(mb=>mb.id!==m.mobId);addChat('',`⚔ ${m.attacker} killed a ${mob.type}!`);}}return;}
-  if(m.type==='chat'){addChat(m.username,m.text);return;}
-}
-function conn(msg,eid){
-  if(ws2&&ws2.readyState===1){ws2.send(JSON.stringify(msg));return;}
-  ws2=new WebSocket(WS_URL);ws2.onopen=()=>ws2.send(JSON.stringify(msg));
-  ws2.onerror=()=>{if(eid)document.getElementById(eid).textContent='Cannot connect to server';};
-  ws2.onmessage=onMsg;ws2.onclose=()=>{if(gRunning)addChat('','⚠ Disconnected');};
-}
-function snd(d){if(ws2&&ws2.readyState===1)ws2.send(JSON.stringify(d));}
-function doLogin(){const u=document.getElementById('lu').value.trim(),p=document.getElementById('lp').value;if(!u||!p){document.getElementById('le').textContent='Fill all fields';return;}conn({type:'login',username:u,password:p},'le');}
-function doReg(){const u=document.getElementById('ru').value.trim(),p=document.getElementById('rp').value;if(!u||!p){document.getElementById('re').textContent='Fill all fields';return;}if(p.length<4){document.getElementById('re').textContent='Password min 4 chars';return;}conn({type:'register',username:u,password:p},'re');}
-document.getElementById('lp').onkeydown=e=>{if(e.key==='Enter')doLogin();};
-document.getElementById('rp').onkeydown=e=>{if(e.key==='Enter')doReg();};
-function startSingleplayer(){isSingleplayer=true;myUser='Player';token=null;try{const sv=JSON.parse(localStorage.getItem('tc_save')||'{}');if(sv.inv)inv=sv.inv;if(sv.hbar)hbar=sv.hbar;if(sv.armor)armor=sv.armor;if(sv.char)charCfg=sv.char;if(sv.x)me.x=sv.x;if(sv.y)me.y=sv.y;}catch{}showScreen('charScreen');initCharEditor();pendingJoin=false;}
-function confirmChar(){
-  if(token){snd({type:'save_data',token,character:charCfg});}
-  if(isSingleplayer){
-    showScreen('gameScreen');
-    genWorld(Math.floor(Math.random()*99999));
-    _doStartGame();
-    spawnLocalMobs();
-  } else {
-    // join - _doStartGame called when server responds with 'joined'
-    conn({type:'join',token});
-    // show loading
-    showScreen('gameScreen');
-    gc.width=innerWidth;gc.height=innerHeight-68;
-    gc.getContext('2d').fillStyle='#000';gc.getContext('2d').fillRect(0,0,gc.width,gc.height);
-    gc.getContext('2d').fillStyle='#e8c84a';gc.getContext('2d').font='20px monospace';
-    gc.getContext('2d').textAlign='center';gc.getContext('2d').fillText('Connecting to world...',gc.width/2,gc.height/2);
-  }
-}
 </script></body></html>
