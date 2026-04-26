@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: voxelcraft
+    runtime: node
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: PORT
+        value: 10000
+    disk:
+      name: voxelcraft-data
+      mountPath: /app/data
+      sizeGB: 1
