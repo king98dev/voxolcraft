@@ -1,7 +1,7 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>TerraCraft</title>
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><title>TerraCraft</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:#000;overflow:hidden;font-family:'Courier New',monospace;color:#fff;image-rendering:pixelated}
+body{background:#000;overflow:hidden;font-family:'Courier New',monospace;color:#fff;image-rendering:pixelated;touch-action:none;-webkit-touch-callout:none;-webkit-user-select:none}
 .screen{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:50}
 .screen.hidden{display:none!important}
 #menuScreen{background:linear-gradient(180deg,#050510,#0a1525 50%,#1a0800)}
@@ -46,7 +46,8 @@ body{background:#000;overflow:hidden;font-family:'Courier New',monospace;color:#
 #coordbox{font-size:11px;color:#e8c84a;font-weight:700;letter-spacing:1px}
 #plbox{font-size:10px;color:#aaa;text-align:right;line-height:1.6}
 #hbarWrap{position:fixed;bottom:0;left:0;right:0;display:flex;justify-content:center;gap:2px;padding:5px;background:rgba(0,0,0,.88);border-top:2px solid #5a4010;z-index:20}
-.hslot{width:56px;height:56px;background:#111;border:2px solid #333;border-radius:2px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;position:relative;flex-shrink:0}
+.hslot{width:52px;height:52px;background:#111;border:2px solid #333;border-radius:2px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;position:relative;flex-shrink:0}
+@media(max-width:600px){.hslot{width:40px;height:40px}.hslot .sl{display:none}#hbarWrap{gap:1px;padding:3px;overflow-x:auto;-webkit-overflow-scrolling:touch;justify-content:flex-start}#topbar{padding:4px 6px}.phud{width:180px}#abilbar{display:none}}
 .hslot.on{border-color:#e8c84a;background:#1a1000}
 .hslot .sc{position:absolute;bottom:2px;right:3px;font-size:9px;color:#fff;font-weight:700;text-shadow:1px 1px 0 #000}
 .hslot .sl{font-size:6px;color:#888;text-align:center;max-width:54px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
@@ -943,6 +944,24 @@ function setupInput(){
   });
   gc.addEventListener('contextmenu',e=>e.preventDefault());
   gc.addEventListener('wheel',e=>{hslot=(hslot+(e.deltaY>0?1:-1)+9)%9;renderHB();});
+  // Touch on canvas (non-mobile-control area = left side for movement handled by dpad)
+  gc.addEventListener('touchstart',e=>{
+    e.preventDefault();
+    const r=gc.getBoundingClientRect();
+    const t=e.touches[0];
+    mX=t.clientX-r.left;mY=t.clientY-r.top;
+    if(e.touches.length===1)mDown=true;
+  },{passive:false});
+  gc.addEventListener('touchmove',e=>{
+    e.preventDefault();
+    const r=gc.getBoundingClientRect();
+    const t=e.touches[0];
+    mX=t.clientX-r.left;mY=t.clientY-r.top;
+  },{passive:false});
+  gc.addEventListener('touchend',e=>{
+    e.preventDefault();
+    mDown=false;me.mineTimer=0;me.mineTgt=null;
+  },{passive:false});
   window.addEventListener('resize',()=>{gc.width=innerWidth;gc.height=innerHeight-68;});
 }
 
@@ -1478,6 +1497,7 @@ function draw(){
 // ═══════════════════════════════════════════════════════════
 function gloop(){
   if(!gRunning)return;requestAnimationFrame(gloop);
+  autoAimMobile();
   updPhys();updMobs();updProjs();updParts();
   Object.values(others).forEach(op=>{op.x+=(op.tx-op.x)*.2;op.y+=(op.ty-op.y)*.2;op.animT=(op.animT||0)+1;if(op.animT>7){op.animT=0;op.animF=(op.animF+1)%4;}if(op.flash>0)op.flash--;});
   draw();
@@ -1718,8 +1738,122 @@ function addChat(name,text){
 }
 
 // ═══════════════════════════════════════════════════════════
+// MOBILE CONTROLS
+// ═══════════════════════════════════════════════════════════
+let isMobile=false;
+let mobileAttacking=false;
+let mobilePinchStart=0;
+let touchTarget={x:0,y:0}; // where player is aiming on screen
+let lastTouchX=0,lastTouchY=0;
+let camDragStart=null;
+
+function detectMobile(){
+  isMobile=('ontouchstart' in window)||(navigator.maxTouchPoints>0);
+  if(isMobile){
+    document.getElementById('mobilecontrols').classList.add('show');
+    document.getElementById('ctrlrow').style.display='none';
+    // hide keyboard-hint hotbar numbers
+    setupTouchCamera();
+  }
+}
+
+function mkey(k,down){
+  if(down){keys[k]=true;}else{keys[k]=false;}
+}
+
+function startMobileAttack(){
+  mobileAttacking=true;
+  mDown=true;
+}
+function stopMobileAttack(){
+  mobileAttacking=false;
+  mDown=false;
+  me.mineTimer=0;me.mineTgt=null;
+}
+function doMobilePlaceAtTarget(){
+  doPlace();
+}
+
+function setupTouchCamera(){
+  const tcv=document.getElementById('touchcam');
+  if(!tcv)return;
+  tcv.width=innerWidth;tcv.height=innerHeight;
+
+  let isDragging=false;
+  let dragStartX=0,dragStartY=0;
+  let lastTap=0;
+
+  tcv.addEventListener('touchstart',e=>{
+    e.preventDefault();
+    const t=e.touches[0];
+    const rx=t.clientX,ry=t.clientY;
+    // right half of screen = aim/attack
+    if(rx>innerWidth*0.45){
+      mX=rx;mY=ry-52; // account for topbar
+      touchTarget.x=rx;touchTarget.y=ry;
+      isDragging=true;dragStartX=rx;dragStartY=ry;
+      // double tap = attack
+      const now=Date.now();
+      if(now-lastTap<300){startMobileAttack();setTimeout(stopMobileAttack,200);}
+      lastTap=now;
+    }
+  },{passive:false});
+
+  tcv.addEventListener('touchmove',e=>{
+    e.preventDefault();
+    const t=e.touches[0];
+    const rx=t.clientX,ry=t.clientY;
+    if(rx>innerWidth*0.45&&isDragging){
+      mX=rx;mY=ry-52;
+      touchTarget.x=rx;touchTarget.y=ry;
+    }
+  },{passive:false});
+
+  tcv.addEventListener('touchend',e=>{
+    isDragging=false;
+    if(mobileAttacking){stopMobileAttack();}
+  },{passive:false});
+}
+
+function updateMobileAbilityUI(){
+  if(!isMobile)return;
+  ABILITIES.forEach((_,i)=>{
+    const el=document.getElementById('mab'+i);
+    if(!el)return;
+    const cd=P1&&P1.abCD?P1.abCD[i]:0; // boxing game check
+    const cdVal=me?.abCD?.[i]||0;
+    if(cdVal>0){el.className='abmobile cooldown';}
+    else{el.className='abmobile ready';}
+  });
+}
+
+// Auto-aim: point mX/mY toward nearest enemy when mining
+function autoAimMobile(){
+  if(!isMobile||!gRunning)return;
+  if(mobs.length===0)return;
+  // find nearest mob on screen
+  let nearest=null,nd=9999;
+  mobs.forEach(mob=>{
+    const sx=mob.x*T-CAM.x,sy=mob.y*T-CAM.y;
+    const d=Math.sqrt((sx-gc.width/2)**2+(sy-gc.height/2)**2);
+    if(d<nd&&d<300){nd=d;nearest=mob;}
+  });
+  if(nearest&&mDown){
+    mX=nearest.x*T-CAM.x;
+    mY=nearest.y*T-CAM.y;
+  }
+}
+
+// Resize touch canvas on orientation change
+window.addEventListener('resize',()=>{
+  const tcv=document.getElementById('touchcam');
+  if(tcv){tcv.width=innerWidth;tcv.height=innerHeight;}
+});
+
+// ═══════════════════════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════════════════════
 initTex();
 initMenu();
+detectMobile();
 </script></body></html>
