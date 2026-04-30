@@ -673,7 +673,7 @@ function confirmChar(){
 // ═══════════════════════════════════════════════════════════
 // SCREENS
 // ═══════════════════════════════════════════════════════════
-function showScreen(id){['menuScreen','authScreen','charScreen','gameScreen'].forEach(s=>document.getElementById(s).classList.toggle('hidden',s!==id));}
+function showScreen(id){['menuScreen','authScreen','charScreen','worldScreen','gameScreen'].forEach(s=>{const el=document.getElementById(s);if(el)el.classList.toggle('hidden',s!==id);});}
 function showMultiplayer(){
   if(!token){showAuth('login');return;}
   showWorldBrowser();
@@ -763,6 +763,18 @@ function joinWorld(wid,password){
   if(!token){showAuth('login');return;}
   const pw=password||null;
   currentWorldId=wid;
+  // Show loading state on game canvas
+  showScreen('gameScreen');
+  gc.width=innerWidth; gc.height=innerHeight-68;
+  const ctx2=gc.getContext('2d');
+  ctx2.fillStyle='#000'; ctx2.fillRect(0,0,gc.width,gc.height);
+  ctx2.fillStyle='#e8c84a'; ctx2.font='bold 20px monospace';
+  ctx2.textAlign='center';
+  ctx2.fillText('Joining world...', gc.width/2, gc.height/2-16);
+  ctx2.fillStyle='#555'; ctx2.font='12px monospace';
+  ctx2.fillText(wid==='public'?'Public World':'Private World', gc.width/2, gc.height/2+10);
+  ctx2.textAlign='left';
+  gRunning=false; // allow _doStartGame to run for new world
   snd({type:'join',worldId:wid,token,worldPassword:pw});
 }
 function snd(d){if(ws2&&ws2.readyState===1)ws2.send(JSON.stringify(d));}
